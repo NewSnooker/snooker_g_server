@@ -1,0 +1,26 @@
+{
+    "InvalidId": {
+        "status": "error",
+        "message": "Invalid ID"
+    },
+    "InvalidUserData": {
+        "status": "error",
+        "message": "Invalid user data"
+    },
+    "InvalidPassword": {
+        "status": "error",
+        "message": "Invalid password"
+    },
+    "EmailExists": {
+        "status": "error",
+        "message": "Email already exists"
+    },
+    "UserNotFound": {
+        "status": "error",
+        "message": "User not found"
+    },
+    "Unauthorized": {
+        "status": "error",
+        "message": "Unauthorized"
+    }
+}
