@@ -1,4 +1,4 @@
-import { Elysia, t } from "elysia";
+import { Elysia, error, t } from "elysia";
 import { authService } from "../services/auth.service";
 import { userSchema, userSignInSchema } from "../schema/user.schema";
 import { msgSchema } from "../schema/common.schema";
@@ -61,6 +61,26 @@ export const authController = new Elysia().group(
             400: msgSchema,
             404: msgSchema,
             409: msgSchema,
+            500: msgSchema,
+          },
+        }
+      )
+      .post(
+        "/logout",
+        async ({ cookie: { auth } }) => {
+          try {
+            auth.remove(); // ลบ cookie
+            return {
+              status: "success",
+              message: "Logged out successfully",
+            };
+          } catch (err) {
+            throw error(500, err);
+          }
+        },
+        {
+          response: {
+            200: msgSchema,
             500: msgSchema,
           },
         }

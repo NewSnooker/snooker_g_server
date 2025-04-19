@@ -1,7 +1,7 @@
 // src/services/user.service.ts
 import { PrismaClient } from "@prisma/client";
 import { Static } from "@sinclair/typebox";
-import { userBody, userBodyLogin } from "../schema/user.schema";
+import { userSchema, userSignInSchema } from "../schema/user.schema";
 import { error } from "elysia";
 import errMsg from "../config/message.error.json";
 import bcrypt from "bcrypt";
@@ -13,7 +13,7 @@ import {
 const prisma = new PrismaClient();
 
 const authService = {
-  signUp: async (user: Static<typeof userBody>) => {
+  signUp: async (user: Static<typeof userSchema>) => {
     try {
       if (Object.values(user).some((v) => !v)) {
         throw error(400, errMsg.InvalidUserData);
@@ -39,7 +39,7 @@ const authService = {
       throw error(500, err);
     }
   },
-  signIn: async (user: Static<typeof userBodyLogin>) => {
+  signIn: async (user: Static<typeof userSignInSchema>) => {
     try {
       if (Object.values(user).some((v) => !v)) {
         throw error(400, errMsg.InvalidUserData);

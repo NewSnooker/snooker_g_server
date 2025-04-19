@@ -1,7 +1,7 @@
 // src/services/user.service.ts
 import { PrismaClient } from "@prisma/client";
 import { Static } from "@sinclair/typebox";
-import { userBody } from "../schema/user.schema";
+import { userSchema } from "../schema/user.schema";
 import { error } from "elysia";
 import { ObjectId } from "mongodb";
 import errMsg from "../config/message.error.json";
@@ -65,7 +65,7 @@ const userService = {
     }
   },
 
-  updateUser: async (id: string, user: Static<typeof userBody>) => {
+  updateUser: async (id: string, user: Static<typeof userSchema>) => {
     try {
       if (!id || !ObjectId.isValid(id)) {
         throw error(400, errMsg.InvalidId);

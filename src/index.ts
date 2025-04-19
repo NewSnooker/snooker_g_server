@@ -55,7 +55,7 @@ const app = new Elysia()
 
 // Start server
 if (env !== "production") {
-  app.listen(process.env.PORT || 3000, () => {
+  app.listen(process.env.PORT || 5000, () => {
     console.log(
       `🚀 Game API is running at http://${app.server?.hostname}:${app.server?.port}`
     );
