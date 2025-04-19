@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { authService } from "../services/auth.service";
-import { userBody, userBodyLogin } from "../schema/user.schema";
+import { userSchema, userSignInSchema } from "../schema/user.schema";
 import { msgSchema } from "../schema/common.schema";
 
 interface JwtPayload {
@@ -19,7 +19,7 @@ export const authController = new Elysia().group(
           return await authService.signUp(body);
         },
         {
-          body: userBody,
+          body: userSchema,
           response: {
             201: msgSchema,
             400: msgSchema,
@@ -37,7 +37,7 @@ export const authController = new Elysia().group(
           });
           auth.set({
             value,
-            maxAge: Date.now() + 1000 * 60 * 60 * 24 * 7, // 7 days
+            maxAge: Date.now() + 1000 * 60 * 60 * 24, // 1 days
             httpOnly: true,
             secure: true,
             path: "/",
@@ -46,7 +46,7 @@ export const authController = new Elysia().group(
           return { response: { ...response, value } };
         },
         {
-          body: userBodyLogin,
+          body: userSignInSchema,
           response: {
             200: t.Object({
               response: t.Object({

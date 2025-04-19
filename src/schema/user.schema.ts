@@ -1,6 +1,6 @@
 import { t } from "elysia";
 
-export const userBody = t.Object({
+export const userSchema = t.Object({
   username: t.String({ minLength: 5, maxLength: 20 }),
   email: t.String({ pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$" }),
   password: t.String({
@@ -9,7 +9,7 @@ export const userBody = t.Object({
     pattern: "^[a-zA-Z0-9!@#$%^&*()_+\\-=]{8,20}$",
   }),
 });
-export const userBodyLogin = t.Object({
+export const userSignInSchema = t.Object({
   email: t.String({ pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$" }),
   password: t.String({
     minLength: 8,

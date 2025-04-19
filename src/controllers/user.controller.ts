@@ -1,5 +1,5 @@
 import { Elysia, error, t } from "elysia";
-import { userBody, userRes } from "../schema/user.schema";
+import { userSchema, userRes } from "../schema/user.schema";
 import { userService } from "../services/user.service";
 import { msgSchema } from "../schema/common.schema";
 import errMsg from "../config/message.error.json";
@@ -20,9 +20,9 @@ export const userController = new Elysia().group(
         app
           .get(
             "/",
-            async ({ query }: any) => {
-              const page = Number(query.page) || 1;
-              const limit = Number(query.limit) || 10;
+            async ({ query }) => {
+              const page = Number(query?.page) || 1;
+              const limit = Number(query?.limit) || 10;
 
               return await userService.getAllUsersPaginated(page, limit);
             },
@@ -78,7 +78,7 @@ export const userController = new Elysia().group(
               params: t.Object({
                 id: t.String(),
               }),
-              body: userBody,
+              body: userSchema,
               response: {
                 200: msgSchema,
                 400: msgSchema,
