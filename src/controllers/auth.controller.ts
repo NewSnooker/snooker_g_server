@@ -43,20 +43,18 @@ export const authController = new Elysia().group(
             path: "/",
           });
 
-          return { response: { ...response, value } };
+          return { ...response, value };
         },
         {
           body: userSignInSchema,
           response: {
             200: t.Object({
-              response: t.Object({
-                status: t.String(),
-                message: t.String(),
-                data: t.Object({
-                  id: t.String(),
-                }),
-                value: t.String(),
+              status: t.String(),
+              message: t.String(),
+              data: t.Object({
+                id: t.String(),
               }),
+              value: t.String(),
             }),
             400: msgSchema,
             404: msgSchema,
@@ -66,7 +64,7 @@ export const authController = new Elysia().group(
         }
       )
       .post(
-        "/logout",
+        "/sign-out",
         async ({ cookie: { auth } }) => {
           try {
             auth.remove(); // ลบ cookie

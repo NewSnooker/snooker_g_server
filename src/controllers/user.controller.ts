@@ -105,5 +105,22 @@ export const userController = new Elysia().group(
               },
             }
           )
+          .get(
+            "/me",
+            async ({ authUser }: any) => {
+              return await userService.getUserById(authUser.id);
+            },
+            {
+              response: {
+                200: t.Object({
+                  status: t.String(),
+                  data: userRes,
+                }),
+                401: msgSchema,
+                404: msgSchema,
+                500: msgSchema,
+              },
+            }
+          )
     )
 );

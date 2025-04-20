@@ -2,19 +2,27 @@ import { t } from "elysia";
 
 export const userSchema = t.Object({
   username: t.String({ minLength: 5, maxLength: 20 }),
-  email: t.String({ pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$" }),
+  email: t.String({
+    pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+    minLength: 5,
+    maxLength: 30,
+  }),
   password: t.String({
     minLength: 8,
     maxLength: 20,
-    pattern: "^[a-zA-Z0-9!@#$%^&*()_+\\-=]{8,20}$",
+    pattern: "[a-zA-Z0-9]{8,20}",
   }),
 });
 export const userSignInSchema = t.Object({
-  email: t.String({ pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$" }),
+  email: t.String({
+    pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+    minLength: 5,
+    maxLength: 30,
+  }),
   password: t.String({
     minLength: 8,
     maxLength: 20,
-    pattern: "^[a-zA-Z0-9!@#$%^&*()_+\\-=]{8,20}$",
+    pattern: "[a-zA-Z0-9]{8,20}",
   }),
 });
 
