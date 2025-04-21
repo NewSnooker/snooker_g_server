@@ -65,6 +65,8 @@ const authService = {
         message: "User signed in successfully.",
         data: {
           id: existingUser.id,
+          email: existingUser.email,
+          tokenVersion: existingUser.tokenVersion,
         },
       };
     } catch (err) {

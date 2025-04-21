@@ -107,16 +107,29 @@ export const userController = new Elysia().group(
           )
           .get(
             "/me",
-            async ({ authUser }: any) => {
-              return await userService.getUserById(authUser.id);
+            async ({ authUser, cookie: { auth } }: any) => {
+              // เรียกฟังก์ชัน getUserById โดยใช้ ID ของ authUser
+              const user = await userService.getUserById(authUser.id);
+
+              // ตรวจสอบว่า tokenVersion ของ user ตรงกับที่ authUser ส่งมา
+              if (user.data.tokenVersion !== authUser.tokenVersion) {
+                // ลบคุกกี้ (force logout)
+                auth.remove();
+                throw error(403, errMsg.TokenInvalidated);
+              }
+
+              // ส่งข้อมูลผู้ใช้กลับเมื่อ tokenVersion ตรงกัน
+              return user; // { status: "success", data: user }
             },
             {
               response: {
                 200: t.Object({
                   status: t.String(),
-                  data: userRes,
+                  data: userRes, // ควรเป็น schema ของ user
                 }),
+                203: msgSchema,
                 401: msgSchema,
+                403: msgSchema,
                 404: msgSchema,
                 500: msgSchema,
               },

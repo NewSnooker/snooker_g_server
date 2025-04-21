@@ -30,6 +30,8 @@ export const userRes = t.Object({
   id: t.String(),
   username: t.String(),
   email: t.String(),
+  imageUrl: t.Union([t.String(), t.Null()]), // <--- อนุญาตให้เป็น null ได้
+  tokenVersion: t.Number(),
   createdAt: t.Date(),
   updatedAt: t.Date(),
 });

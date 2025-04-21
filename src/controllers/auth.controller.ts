@@ -34,6 +34,7 @@ export const authController = new Elysia().group(
           const response = await authService.signIn(body);
           const value = await jwt.sign({
             id: response.data.id,
+            tokenVersion: response.data.tokenVersion,
           });
           auth.set({
             value,

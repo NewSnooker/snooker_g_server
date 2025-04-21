@@ -22,6 +22,8 @@ const userService = {
             email: true,
             createdAt: true,
             updatedAt: true,
+            imageUrl: true,
+            tokenVersion: true,
           },
         }),
         prisma.user.count(),
@@ -51,7 +53,19 @@ const userService = {
       if (!id || !ObjectId.isValid(id)) {
         throw error(400, errMsg.InvalidId);
       }
-      const user = await prisma.user.findUnique({ where: { id } });
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          imageUrl: true,
+          tokenVersion: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
       if (!user) {
         throw error(404, errMsg.UserNotFound);
       }

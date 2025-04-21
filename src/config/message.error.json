@@ -22,5 +22,9 @@
     "Unauthorized": {
         "status": "error",
         "message": "Unauthorized"
+    },
+    "TokenInvalidated": {
+        "status": "error",
+        "message": "Token invalidated"
     }
 }
