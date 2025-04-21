@@ -21,6 +21,7 @@ export const swaggerPlugin = () => {
       },
       tags: [
         { name: "App", description: "General endpoints" },
+        { name: "Admin", description: "Admin endpoints" },
         { name: "Auth", description: "Auth endpoints" },
         { name: "User", description: "User endpoints" },
       ],
