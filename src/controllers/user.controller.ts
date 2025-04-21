@@ -2,7 +2,7 @@ import { Elysia, error, t } from "elysia";
 import { userSchema, userRes } from "../schema/user.schema";
 import { userService } from "../services/user.service";
 import { msgSchema } from "../schema/common.schema";
-import errMsg from "../config/message.error.json";
+import { errMsg } from "@/config/message.error";
 
 export const userController = new Elysia().group(
   "/user",
@@ -115,7 +115,7 @@ export const userController = new Elysia().group(
               if (user.data.tokenVersion !== authUser.tokenVersion) {
                 // ลบคุกกี้ (force logout)
                 auth.remove();
-                throw error(403, errMsg.TokenInvalidated);
+                throw error(401, errMsg.TokenInvalidated);
               }
 
               // ส่งข้อมูลผู้ใช้กลับเมื่อ tokenVersion ตรงกัน
@@ -129,7 +129,6 @@ export const userController = new Elysia().group(
                 }),
                 203: msgSchema,
                 401: msgSchema,
-                403: msgSchema,
                 404: msgSchema,
                 500: msgSchema,
               },

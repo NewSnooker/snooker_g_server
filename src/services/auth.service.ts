@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { Static } from "@sinclair/typebox";
 import { userSchema, userSignInSchema } from "../schema/user.schema";
 import { error } from "elysia";
-import errMsg from "../config/message.error.json";
+import { errMsg } from "@/config/message.error";
 import bcrypt from "bcrypt";
 import {
   getUserByEmailAllFields,
@@ -33,7 +33,7 @@ const authService = {
 
       return {
         status: "success",
-        message: "User created successfully.",
+        message: "สร้างบัญชีผู้ใช้งานสําเร็จ",
       };
     } catch (err) {
       throw error(500, err);
@@ -62,7 +62,7 @@ const authService = {
 
       return {
         status: "success",
-        message: "User signed in successfully.",
+        message: "เข้าสู่ระบบสําเร็จ",
         data: {
           id: existingUser.id,
           email: existingUser.email,

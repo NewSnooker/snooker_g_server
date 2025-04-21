@@ -3,10 +3,6 @@ import { authService } from "../services/auth.service";
 import { userSchema, userSignInSchema } from "../schema/user.schema";
 import { msgSchema } from "../schema/common.schema";
 
-interface JwtPayload {
-  id: string;
-}
-
 export const authController = new Elysia().group(
   "/auth",
   { tags: ["Auth"] },

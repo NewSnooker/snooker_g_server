@@ -4,7 +4,7 @@ import { Static } from "@sinclair/typebox";
 import { userSchema } from "../schema/user.schema";
 import { error } from "elysia";
 import { ObjectId } from "mongodb";
-import errMsg from "../config/message.error.json";
+import { errMsg } from "@/config/message.error";
 
 const prisma = new PrismaClient();
 
@@ -111,7 +111,7 @@ const userService = {
 
       return {
         status: "success",
-        message: `User with ID ${id} has been updated.`,
+        message: `แก้ไขข้อมูลผู้ใช้งานสําเร็จ`,
       };
     } catch (err) {
       throw error(500, err);
@@ -139,7 +139,7 @@ const userService = {
 
       return {
         status: "success",
-        message: `User with ID ${id} has been deleted.`,
+        message: `ลบผู้ใช้งานสําเร็จ`,
       };
     } catch (err) {
       throw error(500, err);
