@@ -133,7 +133,7 @@ export const userController = new Elysia().group(
               ) {
                 // ลบคุกกี้ (force logout)
                 auth.remove();
-                set.status = 401;
+                set.status = 403;
                 logger.warn("[USER][ME] TokenInvalidated");
                 return errMsg.TokenInvalidated;
               }
@@ -147,8 +147,8 @@ export const userController = new Elysia().group(
                   status: t.Number(),
                   data: userRes, // ควรเป็น schema ของ user
                 }),
-                203: msgSchema,
                 401: msgSchema,
+                403: msgSchema,
                 404: msgSchema,
                 500: msgSchema,
               },

@@ -83,7 +83,7 @@ const authService = {
       throw error(500, err);
     }
   },
-  signOut: async ({ auth }: any) => {
+  signOut: async (auth: any) => {
     logger.info("[AUTH][signOut] Start");
     try {
       auth.remove(); // ลบ cookie

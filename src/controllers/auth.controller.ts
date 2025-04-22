@@ -51,7 +51,7 @@ export const authController = new Elysia().group(
           body: userSignInSchema,
           response: {
             200: t.Object({
-              status: t.String(),
+              status: t.Number(),
               message: t.String(),
               data: t.Object({
                 id: t.String(),
