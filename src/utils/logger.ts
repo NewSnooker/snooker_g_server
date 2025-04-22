@@ -1,27 +1,41 @@
-// utils/logger.ts
 import { createLogger, format, transports } from "winston";
+import DailyRotateFile from "winston-daily-rotate-file";
+// const logFormat = printf(({ level, message, timestamp }) => {
+//   return `${timestamp} [${level}] ${message}`;
+// });
 
-// กำหนดรูปแบบของ log ให้มี timestamp, ระดับ log, และ message
-const { combine, timestamp, printf, colorize } = format;
-
-const logFormat = printf(({ level, message, timestamp }) => {
-  return `[${timestamp}] [${level}]: ${message}`;
+// // สร้าง logger instance
+// export const logger = createLogger({
+//   level: process.env.NODE_ENV === "development" ? "debug" : "info",
+//   format: combine(
+//     timestamp({ format: "DD-MM-YYYY HH:mm:ss" }),
+//     colorize({ level: true }), // ใส่สีให้ console log
+//     // format.align(),
+//     logFormat
+//   ),
+// กำหนดรูปแบบ log
+const logFormat = format.printf(({ level, message, timestamp }) => {
+  return `${timestamp} [${level}] ${message}`;
 });
 
-// สร้าง logger instance
+// ตั้งค่า logger
 export const logger = createLogger({
   level: process.env.NODE_ENV === "development" ? "debug" : "info",
-  format: combine(
-    timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    colorize({ level: true }), // ใส่สีให้ console log
-    format.align(),
+  format: format.combine(
+    format.timestamp({ format: "DD-MM-YYYY HH:mm:ss" }), // รูปแบบวันที่และเวลา
+    format.colorize({ all: true }), // ใส่สีให้ log
     logFormat
   ),
   transports: [
-    // แสดงผลใน console
-    new transports.Console(),
-    // ถ้าต้องการเก็บไฟล์ log เพิ่มเติม
-    new transports.File({ filename: "logs/error.log", level: "error" }),
-    // new transports.File({ filename: "logs/combined.log" }),
+    new transports.Console(), // แสดง log ใน console
+    new DailyRotateFile({
+      filename: "logs/daily/%DATE%.log",
+      datePattern: "DD-MM-YYYY",
+      level: "error",
+      zippedArchive: true,
+      maxSize: "20m",
+      maxFiles: "14d",
+    }),
+    new transports.File({ filename: "logs/error.log", level: "error" }), // เก็บ log ระดับ error
   ],
 });
