@@ -1,4 +1,4 @@
-import { Elysia, error, t } from "elysia";
+import { Elysia, t } from "elysia";
 import { authService } from "../services/auth.service";
 import { userSchema, userSignInSchema } from "../schema/user.schema";
 import { msgSchema } from "../schema/common.schema";
@@ -11,8 +11,9 @@ export const authController = new Elysia().group(
       .post(
         "/sign-up",
         async ({ body, set }) => {
-          set.status = 201;
-          return await authService.signUp(body);
+          const response = await authService.signUp(body);
+          set.status = response.status;
+          return response;
         },
         {
           body: userSchema,
@@ -26,21 +27,25 @@ export const authController = new Elysia().group(
       )
       .post(
         "/sign-in",
-        async ({ body, cookie: { auth }, jwt }: any) => {
+        async ({ body, set, cookie: { auth }, jwt }: any) => {
           const response = await authService.signIn(body);
-          const value = await jwt.sign({
-            id: response.data.id,
-            tokenVersion: response.data.tokenVersion,
-          });
-          auth.set({
-            value,
-            maxAge: Date.now() + 1000 * 60 * 60 * 24, // 1 days
-            httpOnly: true,
-            secure: true,
-            path: "/",
-          });
+          if (response.status === 200) {
+            const value = await jwt.sign({
+              id: response.data.id,
+              tokenVersion: response.data.tokenVersion,
+            });
+            auth.set({
+              value,
+              maxAge: Date.now() + 1000 * 60 * 60 * 24, // 1 days
+              httpOnly: true,
+              secure: true,
+              path: "/",
+            });
 
-          return { ...response, value };
+            return { ...response, value };
+          }
+          set.status = response.status;
+          return response;
         },
         {
           body: userSignInSchema,
@@ -62,16 +67,10 @@ export const authController = new Elysia().group(
       )
       .post(
         "/sign-out",
-        async ({ cookie: { auth } }) => {
-          try {
-            auth.remove(); // ลบ cookie
-            return {
-              status: "success",
-              message: "Logged out successfully",
-            };
-          } catch (err) {
-            throw error(500, err);
-          }
+        async ({ cookie: { auth }, set }: any) => {
+          const response = await authService.signOut(auth);
+          set.status = response.status;
+          return response;
         },
         {
           response: {

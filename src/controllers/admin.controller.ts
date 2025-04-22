@@ -2,6 +2,8 @@ import { Elysia, error, t } from "elysia";
 import { msgSchema } from "../schema/common.schema";
 import { errMsg } from "@/config/message.error";
 import { adminService } from "@/services/admin.service";
+import { authContext } from "@/interface/common.interface";
+import { logger } from "@/utils/logger";
 
 export const adminController = new Elysia().group(
   "/admin",
@@ -9,9 +11,12 @@ export const adminController = new Elysia().group(
   (app) =>
     app.guard(
       {
-        beforeHandle: ({ authUser }: any) => {
+        beforeHandle: (context) => {
+          const { authUser, set } = context as authContext;
           if (!authUser) {
-            throw error(401, errMsg.Unauthorized);
+            set.status = 401;
+            logger.warn("[ADMIN][beforeHandle] Unauthorized");
+            return errMsg.Unauthorized;
           }
         },
       },
@@ -19,8 +24,10 @@ export const adminController = new Elysia().group(
         app
           .post(
             "/force-logout/:id",
-            async ({ params }) => {
-              return await adminService.forceLogoutById(params.id);
+            async ({ params, set }) => {
+              const response = await adminService.forceLogoutById(params.id);
+              set.status = response.status;
+              return response;
             },
             {
               detail: {
@@ -39,8 +46,10 @@ export const adminController = new Elysia().group(
           )
           .post(
             "/force-logout-all",
-            async () => {
-              return await adminService.forceLogoutAll();
+            async ({ set }) => {
+              const response = await adminService.forceLogoutAll();
+              set.status = response.status;
+              return response;
             },
             {
               detail: {

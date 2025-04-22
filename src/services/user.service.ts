@@ -5,11 +5,15 @@ import { userSchema } from "../schema/user.schema";
 import { error } from "elysia";
 import { ObjectId } from "mongodb";
 import { errMsg } from "@/config/message.error";
+import { logger } from "@/utils/logger";
 
 const prisma = new PrismaClient();
 
 const userService = {
   getAllUsersPaginated: async (page: number, limit: number) => {
+    logger.info(
+      `[USER][getAllUsersPaginated] Start {"page": "${page}", "limit": "${limit}"}`
+    );
     try {
       const skip = (page - 1) * limit;
       const [users, total] = await Promise.all([
@@ -30,11 +34,13 @@ const userService = {
       ]);
 
       if (users.length === 0) {
-        throw error(404, errMsg.UserNotFound);
+        logger.warn("[USER][getAllUsersPaginated] UserNotFound");
+        return errMsg.UserNotFound;
       }
+      logger.info("[USER][getAllUsersPaginated] Success");
 
       return {
-        status: "success",
+        status: 200,
         data: users,
         pagination: {
           total,
@@ -44,14 +50,17 @@ const userService = {
         },
       };
     } catch (err) {
+      logger.error("[USER][getAllUsersPaginated] Error:", err);
       throw error(500, err);
     }
   },
 
   getUserById: async (id: string) => {
+    logger.info(`[USER][getUserById] Start {"id": "${id}"}`);
     try {
       if (!id || !ObjectId.isValid(id)) {
-        throw error(400, errMsg.InvalidId);
+        logger.warn("[USER][getUserById] ID InvalidId");
+        return errMsg.InvalidId;
       }
       const user = await prisma.user.findUnique({
         where: { id },
@@ -67,30 +76,37 @@ const userService = {
       });
 
       if (!user) {
-        throw error(404, errMsg.UserNotFound);
+        logger.warn("[USER][getUserById] UserNotFound");
+        return errMsg.UserNotFound;
       }
+      logger.info("[USER][getUserById] Success");
 
       return {
-        status: "success",
+        status: 200,
         data: user,
       };
     } catch (err) {
+      logger.error("[USER][getUserById] Error:", err);
       throw error(500, err);
     }
   },
 
   updateUser: async (id: string, user: Static<typeof userSchema>) => {
+    logger.info(`[USER][updateUser] Start {"id": "${id}", "user": "${user}"}`);
     try {
       if (!id || !ObjectId.isValid(id)) {
-        throw error(400, errMsg.InvalidId);
+        logger.warn("[USER][updateUser] InvalidId");
+        return errMsg.InvalidId;
       }
       if (!user) {
-        throw error(400, errMsg.InvalidUserData);
+        logger.warn("[USER][updateUser] InvalidUserData");
+        return errMsg.InvalidUserData;
       }
 
       const existingUser = await prisma.user.findUnique({ where: { id } });
       if (!existingUser) {
-        throw error(404, errMsg.UserNotFound);
+        logger.warn("[USER][updateUser] UserNotFound");
+        return errMsg.UserNotFound;
       }
 
       // ตรวจสอบว่ามีการเปลี่ยนอีเมลเป็นอีเมลที่มีอยู่แล้วหรือไม่
@@ -100,7 +116,8 @@ const userService = {
         });
 
         if (emailExists) {
-          throw error(409, errMsg.EmailExists);
+          logger.warn("[USER][updateUser] EmailExists");
+          return errMsg.EmailExists;
         }
       }
 
@@ -109,19 +126,24 @@ const userService = {
         data: user,
       });
 
+      logger.info("[USER][updateUser] Success");
+
       return {
-        status: "success",
+        status: 200,
         message: `แก้ไขข้อมูลผู้ใช้งานสําเร็จ`,
       };
     } catch (err) {
+      logger.error("[USER][updateUser] Error:", err);
       throw error(500, err);
     }
   },
 
   deleteUser: async (id: string) => {
+    logger.info(`[USER][deleteUser] Start {"id": "${id}"}`);
     try {
       if (!id || !ObjectId.isValid(id) || "") {
-        throw error(400, errMsg.InvalidId);
+        logger.warn("[USER][deleteUser] InvalidId");
+        return errMsg.InvalidId;
       }
 
       // ตรวจสอบว่ามีผู้ใช้นี้หรือไม่ก่อนลบ
@@ -130,18 +152,22 @@ const userService = {
       });
 
       if (!existingUser) {
-        throw error(404, errMsg.UserNotFound);
+        logger.warn("[USER][deleteUser] UserNotFound");
+        return errMsg.UserNotFound;
       }
 
       await prisma.user.delete({
         where: { id },
       });
 
+      logger.info("[USER][deleteUser] Success");
+
       return {
-        status: "success",
+        status: 200,
         message: `ลบผู้ใช้งานสําเร็จ`,
       };
     } catch (err) {
+      logger.error("[USER][deleteUser] Error:", err);
       throw error(500, err);
     }
   },

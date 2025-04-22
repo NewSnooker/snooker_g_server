@@ -1,14 +1,17 @@
 import { cors } from "@elysiajs/cors";
-import { Elysia, NotFoundError, ValidationError } from "elysia";
+import { Elysia, NotFoundError } from "elysia";
 import { routes } from "./routes";
 import { swaggerPlugin } from "./plugins/swagger.plugin";
 import jwt from "@elysiajs/jwt";
 import cookie from "@elysiajs/cookie";
+import { logger } from "./utils/logger";
 
 // Load ENV
-const env = process.env.NODE_ENV || "dev";
+const env = process.env.NODE_ENV || "development";
 
 const app = new Elysia()
+  // ตกแต่งด้วย winston logger
+  .decorate("logger", logger)
   .use(cookie())
   .use(
     jwt({
@@ -31,22 +34,16 @@ const app = new Elysia()
   })
   .use(swaggerPlugin())
   .use(routes)
-  .onError(({ code, error }) => {
+  .onError(({ code, error, logger }) => {
     if (error instanceof NotFoundError) {
+      logger.warn(`NotFoundError: ${error.message}`);
       return {
         status: "error",
         message: "API Endpoint or Method: " + error.message,
       };
     }
 
-    if (error instanceof ValidationError) {
-      return {
-        status: "error",
-        message: "Validation Error: " + error.message,
-      };
-    }
-
-    console.error("Unhandled Error:", error);
+    logger.error("Unhandled Error:", error);
     return {
       status: "error",
       message: "Something went wrong!!: " + (error as Error).message,

@@ -9,20 +9,24 @@ import {
   getUserByEmailAllFields,
   getUserByEmailNoPassword,
 } from "./common.service";
+import { logger } from "@/utils/logger";
 
 const prisma = new PrismaClient();
 
 const authService = {
   signUp: async (user: Static<typeof userSchema>) => {
+    logger.info(`[AUTH][signUp] Start {"email": "${user.email}"}`);
     try {
       if (Object.values(user).some((v) => !v)) {
-        throw error(400, errMsg.InvalidUserData);
+        logger.warn("[AUTH][signUp] InvalidUserData");
+        return errMsg.InvalidUserData;
       }
 
       const existingUser = await getUserByEmailNoPassword(user.email);
 
       if (existingUser) {
-        throw error(409, errMsg.EmailExists);
+        logger.warn("[AUTH][signUp] EmailExists");
+        return errMsg.EmailExists;
       }
 
       user.password = await bcrypt.hash(user.password, 10);
@@ -30,25 +34,29 @@ const authService = {
       await prisma.user.create({
         data: user,
       });
-
+      logger.info(`[AUTH][signUp] Success`);
       return {
-        status: "success",
+        status: 201,
         message: "สร้างบัญชีผู้ใช้งานสําเร็จ",
       };
     } catch (err) {
+      logger.error("[AUTH][signUp] Error:", err);
       throw error(500, err);
     }
   },
   signIn: async (user: Static<typeof userSignInSchema>) => {
+    logger.info(`[AUTH][signIn] Start {"email": "${user.email}"}`);
     try {
       if (Object.values(user).some((v) => !v)) {
-        throw error(400, errMsg.InvalidUserData);
+        logger.warn("[AUTH][signIn] InvalidUserData");
+        return errMsg.InvalidUserData;
       }
 
       const existingUser = await getUserByEmailAllFields(user.email);
 
       if (!existingUser) {
-        throw error(404, errMsg.UserNotFound);
+        logger.warn("[AUTH][signIn] UserNotFound");
+        return errMsg.UserNotFound;
       }
 
       const isPasswordMatch = await bcrypt.compare(
@@ -57,11 +65,12 @@ const authService = {
       );
 
       if (!isPasswordMatch) {
-        throw error(409, errMsg.InvalidPassword);
+        logger.warn("[AUTH][signIn] InvalidPassword");
+        return errMsg.InvalidPassword;
       }
-
+      logger.info("[AUTH][signIn] Success");
       return {
-        status: "success",
+        status: 200,
         message: "เข้าสู่ระบบสําเร็จ",
         data: {
           id: existingUser.id,
@@ -70,6 +79,21 @@ const authService = {
         },
       };
     } catch (err) {
+      logger.error("[AUTH][signIn] Error:", err);
+      throw error(500, err);
+    }
+  },
+  signOut: async ({ auth }: any) => {
+    logger.info("[AUTH][signOut] Start");
+    try {
+      auth.remove(); // ลบ cookie
+      logger.info("[AUTH][signOut] Success");
+      return {
+        status: 200,
+        message: "Logged out successfully",
+      };
+    } catch (err) {
+      logger.error("[AUTH][signOut] Error:", err);
       throw error(500, err);
     }
   },

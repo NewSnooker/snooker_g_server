@@ -1,30 +1,30 @@
 export const errMsg = {
   InvalidId: {
-    status: "error",
+    status: 400,
     message: "รหัสผู้ใช้ไม่ถูกต้อง",
   },
   InvalidUserData: {
-    status: "error",
+    status: 400,
     message: "ข้อมูลผู้ใช้ไม่ถูกต้อง",
   },
   InvalidPassword: {
-    status: "error",
+    status: 409,
     message: "รหัสผ่านไม่ถูกต้อง",
   },
   EmailExists: {
-    status: "error",
+    status: 409,
     message: "มีอีเมลนี้ในระบบแล้ว",
   },
   UserNotFound: {
-    status: "error",
+    status: 404,
     message: "ไม่พบผู้ใช้",
   },
   Unauthorized: {
-    status: "error",
+    status: 401,
     message: "ไม่อนุญาต",
   },
   TokenInvalidated: {
-    status: "error",
-    message: "Token หมดอายุ",
+    status: 401,
+    message: "โทเค็น หมดอายุ",
   },
 } as const;

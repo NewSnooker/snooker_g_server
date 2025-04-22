@@ -1,6 +1,6 @@
 import { t } from "elysia";
 
 export const msgSchema = t.Object({
-  status: t.String(),
+  status: t.Number(),
   message: t.String(),
 });

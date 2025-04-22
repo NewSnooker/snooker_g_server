@@ -1,8 +1,10 @@
-import { Elysia, error, t } from "elysia";
+import { Elysia, t } from "elysia";
 import { userSchema, userRes } from "../schema/user.schema";
 import { userService } from "../services/user.service";
 import { msgSchema } from "../schema/common.schema";
 import { errMsg } from "@/config/message.error";
+import { authContext } from "@/interface/common.interface";
+import { logger } from "@/utils/logger";
 
 export const userController = new Elysia().group(
   "/user",
@@ -10,9 +12,12 @@ export const userController = new Elysia().group(
   (app) =>
     app.guard(
       {
-        beforeHandle: ({ authUser }: any) => {
+        beforeHandle: (context) => {
+          const { authUser, set } = context as authContext;
           if (!authUser) {
-            throw error(401, errMsg.Unauthorized);
+            set.status = 401;
+            logger.warn("[USER][beforeHandle] Unauthorized");
+            return errMsg.Unauthorized;
           }
         },
       },
@@ -20,11 +25,15 @@ export const userController = new Elysia().group(
         app
           .get(
             "/",
-            async ({ query }) => {
+            async ({ query, set }) => {
               const page = Number(query?.page) || 1;
               const limit = Number(query?.limit) || 10;
-
-              return await userService.getAllUsersPaginated(page, limit);
+              const response = await userService.getAllUsersPaginated(
+                page,
+                limit
+              );
+              set.status = response.status;
+              return response;
             },
             {
               query: t.Object({
@@ -33,7 +42,7 @@ export const userController = new Elysia().group(
               }),
               response: {
                 200: t.Object({
-                  status: t.String(),
+                  status: t.Number(),
                   data: t.Array(userRes),
                   pagination: t.Object({
                     total: t.Number(),
@@ -51,8 +60,10 @@ export const userController = new Elysia().group(
 
           .get(
             "/:id",
-            async ({ params }) => {
-              return await userService.getUserById(params.id);
+            async ({ params, set }) => {
+              const response = await userService.getUserById(params.id);
+              set.status = response.status;
+              return response;
             },
             {
               params: t.Object({
@@ -60,7 +71,7 @@ export const userController = new Elysia().group(
               }),
               response: {
                 200: t.Object({
-                  status: t.String(),
+                  status: t.Number(),
                   data: userRes,
                 }),
                 400: msgSchema,
@@ -71,8 +82,10 @@ export const userController = new Elysia().group(
           )
           .put(
             "/:id",
-            async ({ params, body }) => {
-              return await userService.updateUser(params.id, body);
+            async ({ params, body, set }) => {
+              const response = await userService.updateUser(params.id, body);
+              set.status = response.status;
+              return response;
             },
             {
               params: t.Object({
@@ -90,8 +103,10 @@ export const userController = new Elysia().group(
           )
           .delete(
             "/:id",
-            async ({ params }) => {
-              return await userService.deleteUser(params.id);
+            async ({ params, set }) => {
+              const response = await userService.deleteUser(params.id);
+              set.status = response.status;
+              return response;
             },
             {
               params: t.Object({
@@ -107,15 +122,20 @@ export const userController = new Elysia().group(
           )
           .get(
             "/me",
-            async ({ authUser, cookie: { auth } }: any) => {
+            async ({ authUser, set, cookie: { auth } }: any) => {
               // เรียกฟังก์ชัน getUserById โดยใช้ ID ของ authUser
               const user = await userService.getUserById(authUser.id);
 
               // ตรวจสอบว่า tokenVersion ของ user ตรงกับที่ authUser ส่งมา
-              if (user.data.tokenVersion !== authUser.tokenVersion) {
+              if (
+                user.status === 200 &&
+                user.data.tokenVersion !== authUser.tokenVersion
+              ) {
                 // ลบคุกกี้ (force logout)
                 auth.remove();
-                throw error(401, errMsg.TokenInvalidated);
+                set.status = 401;
+                logger.warn("[USER][ME] TokenInvalidated");
+                return errMsg.TokenInvalidated;
               }
 
               // ส่งข้อมูลผู้ใช้กลับเมื่อ tokenVersion ตรงกัน
@@ -124,7 +144,7 @@ export const userController = new Elysia().group(
             {
               response: {
                 200: t.Object({
-                  status: t.String(),
+                  status: t.Number(),
                   data: userRes, // ควรเป็น schema ของ user
                 }),
                 203: msgSchema,
