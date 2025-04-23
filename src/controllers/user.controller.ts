@@ -132,6 +132,8 @@ export const userController = new Elysia().group(
                 user.data.tokenVersion !== authUser.tokenVersion
               ) {
                 // ลบคุกกี้ (force logout)
+                // จากนั้นให้ middleware เตะ user ออก
+
                 auth.remove();
                 set.status = 403;
                 logger.warn("[USER][ME] TokenInvalidated");
