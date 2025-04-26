@@ -143,12 +143,9 @@ export const userController = new Elysia().group(
             }
           )
           .put(
-            "/avatar",
-            async ({ query, body, set }) => {
-              const response = await userService.updateAvatar(
-                query.id,
-                body.avatar
-              );
+            "/avatar/:id",
+            async ({ params: { id }, body, set }) => {
+              const response = await userService.updateAvatar(id, body.avatar);
               set.status = response.status;
               return response;
             },
@@ -166,10 +163,10 @@ export const userController = new Elysia().group(
             }
           )
           .put(
-            "/username",
-            async ({ query, body, set }) => {
+            "/username/:id",
+            async ({ params: { id }, body, set }) => {
               const response = await userService.updateUsername(
-                query.id,
+                id,
                 body.username
               );
               set.status = response.status;

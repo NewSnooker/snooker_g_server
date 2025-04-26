@@ -202,7 +202,7 @@ const userService = {
 
       return {
         status: 200,
-        message: `แก้ไขรูปโปรไฟล์สําเร็จ`,
+        message: `แก้ไขชื่อผู้ใช้สําเร็จ`,
       };
     } catch (err) {
       logger.error("[USER][updateUsername] Error:", err);
