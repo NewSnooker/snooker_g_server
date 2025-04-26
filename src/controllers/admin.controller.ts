@@ -63,5 +63,24 @@ export const adminController = new Elysia().group(
               },
             }
           )
+          .delete(
+            "/:id",
+            async ({ params, set }) => {
+              const response = await adminService.deleteUser(params.id);
+              set.status = response.status;
+              return response;
+            },
+            {
+              params: t.Object({
+                id: t.String(),
+              }),
+              response: {
+                200: msgSchema,
+                400: msgSchema,
+                404: msgSchema,
+                500: msgSchema,
+              },
+            }
+          )
     )
 );

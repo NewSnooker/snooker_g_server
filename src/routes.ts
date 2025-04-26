@@ -6,4 +6,5 @@ import { adminController } from "./controllers/admin.controller";
 export const routes = new Elysia({ prefix: "/api" })
   .use(authController)
   .use(userController)
-  .use(adminController);
+  .use(adminController)
+  .get("/", () => "Hello Elysia");

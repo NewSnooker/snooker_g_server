@@ -1,10 +1,14 @@
 import { Elysia, t } from "elysia";
-import { userSchema, userRes } from "../schema/user.schema";
 import { userService } from "../services/user.service";
-import { msgSchema } from "../schema/common.schema";
 import { errMsg } from "@/config/message.error";
 import { authContext } from "@/interface/common.interface";
 import { logger } from "@/utils/logger";
+import { msgSchema } from "@/schema/common.schema";
+import {
+  avatarSchema,
+  userBodySchema,
+  userResSchema,
+} from "@/schema/user.schema";
 
 export const userController = new Elysia().group(
   "/user",
@@ -43,7 +47,7 @@ export const userController = new Elysia().group(
               response: {
                 200: t.Object({
                   status: t.Number(),
-                  data: t.Array(userRes),
+                  data: t.Array(userResSchema),
                   pagination: t.Object({
                     total: t.Number(),
                     page: t.Number(),
@@ -72,7 +76,7 @@ export const userController = new Elysia().group(
               response: {
                 200: t.Object({
                   status: t.Number(),
-                  data: userRes,
+                  data: userResSchema,
                 }),
                 400: msgSchema,
                 404: msgSchema,
@@ -91,7 +95,7 @@ export const userController = new Elysia().group(
               params: t.Object({
                 id: t.String(),
               }),
-              body: userSchema,
+              body: userBodySchema,
               response: {
                 200: msgSchema,
                 400: msgSchema,
@@ -101,25 +105,7 @@ export const userController = new Elysia().group(
               },
             }
           )
-          .delete(
-            "/:id",
-            async ({ params, set }) => {
-              const response = await userService.deleteUser(params.id);
-              set.status = response.status;
-              return response;
-            },
-            {
-              params: t.Object({
-                id: t.String(),
-              }),
-              response: {
-                200: msgSchema,
-                400: msgSchema,
-                404: msgSchema,
-                500: msgSchema,
-              },
-            }
-          )
+
           .get(
             "/me",
             async ({ authUser, set, cookie: { auth } }: any) => {
@@ -147,11 +133,57 @@ export const userController = new Elysia().group(
               response: {
                 200: t.Object({
                   status: t.Number(),
-                  data: userRes, // ควรเป็น schema ของ user
+                  data: userResSchema, // ควรเป็น schema ของ user
                 }),
                 401: msgSchema,
                 403: msgSchema,
                 404: msgSchema,
+                500: msgSchema,
+              },
+            }
+          )
+          .put(
+            "/avatar",
+            async ({ query, body, set }) => {
+              const response = await userService.updateAvatar(
+                query.id,
+                body.avatar
+              );
+              set.status = response.status;
+              return response;
+            },
+            {
+              body: t.Object({
+                avatar: avatarSchema,
+              }),
+              response: {
+                200: msgSchema,
+                400: msgSchema,
+                404: msgSchema,
+                409: msgSchema,
+                500: msgSchema,
+              },
+            }
+          )
+          .put(
+            "/username",
+            async ({ query, body, set }) => {
+              const response = await userService.updateUsername(
+                query.id,
+                body.username
+              );
+              set.status = response.status;
+              return response;
+            },
+            {
+              body: t.Object({
+                username: t.String(),
+              }),
+              response: {
+                200: msgSchema,
+                400: msgSchema,
+                404: msgSchema,
+                409: msgSchema,
                 500: msgSchema,
               },
             }

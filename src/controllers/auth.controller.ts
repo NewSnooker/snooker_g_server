@@ -1,6 +1,10 @@
 import { Elysia, t } from "elysia";
 import { authService } from "../services/auth.service";
-import { userSchema, userSignInSchema } from "../schema/user.schema";
+import {
+  googleSignInSchema,
+  userBodySchema,
+  userSignInSchema,
+} from "../schema/user.schema";
 import { msgSchema } from "../schema/common.schema";
 
 export const authController = new Elysia().group(
@@ -16,7 +20,7 @@ export const authController = new Elysia().group(
           return response;
         },
         {
-          body: userSchema,
+          body: userBodySchema,
           response: {
             201: msgSchema,
             400: msgSchema,
@@ -38,7 +42,7 @@ export const authController = new Elysia().group(
               value,
               maxAge: Date.now() + 1000 * 60 * 60 * 24, // 1 days
               httpOnly: true,
-              secure: true,
+              secure: process.env.NODE_ENV === "production",
               path: "/",
             });
 
@@ -61,6 +65,42 @@ export const authController = new Elysia().group(
             400: msgSchema,
             404: msgSchema,
             409: msgSchema,
+            500: msgSchema,
+          },
+        }
+      ) // เพิ่ม Google Sign-In
+      .post(
+        "/sign-in/google",
+        async ({ body, set, cookie: { auth }, jwt }: any) => {
+          const response = await authService.signInWithGoogle(body.idToken);
+          if (response.status === 200 && response.data) {
+            // สร้าง JWT และเซ็ต cookie เหมือนเดิม
+            const token = await jwt.sign({
+              id: response.data.id,
+              tokenVersion: response.data.tokenVersion,
+            });
+            auth.set({
+              value: token,
+              maxAge: 60 * 60 * 24, // 1 วัน
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              path: "/",
+            });
+            return { ...response, value: token };
+          }
+          set.status = response.status;
+          return response;
+        },
+        {
+          body: googleSignInSchema,
+          response: {
+            200: t.Object({
+              status: t.Number(),
+              message: t.String(),
+              data: t.Object({ id: t.String() }),
+              value: t.String(),
+            }),
+            400: msgSchema,
             500: msgSchema,
           },
         }

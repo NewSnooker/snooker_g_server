@@ -11,9 +11,11 @@ export const getUserByEmailNoPassword = async (email: string) => {
       username: true,
       createdAt: true,
       updatedAt: true,
+      tokenVersion: true,
     },
   });
 };
+
 export const getUserByEmailAllFields = async (email: string) => {
   return await prisma.user.findUnique({
     where: { email },

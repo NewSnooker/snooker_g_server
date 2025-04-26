@@ -9,6 +9,10 @@ import { logger } from "./utils/logger";
 // Load ENV
 const env = process.env.NODE_ENV || "development";
 
+//  process.env.GOOGLE_CLIENT_ID;
+// process.env.GOOGLE_CLIENT_SECRET;
+// process.env.GOOGLE_REDIRECT_URL;
+
 const app = new Elysia()
   // ตกแต่งด้วย winston logger
   .decorate("logger", logger)
@@ -23,7 +27,7 @@ const app = new Elysia()
     cors({
       origin: ["http://localhost:3000"],
       allowedHeaders: ["Content-Type", "Authorization"],
-      exposeHeaders: ["Content-Type", "Authorization"],
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
       credentials: true,
       maxAge: 86400, //👍 browser จำผล preflight ไว้ 24 ชม.
     })
@@ -38,15 +42,15 @@ const app = new Elysia()
     if (error instanceof NotFoundError) {
       logger.warn(`NotFoundError: ${error.message}`);
       return {
-        status: "error",
+        status: 500,
         message: "API Endpoint or Method: " + error.message,
       };
     }
 
     logger.error("Unhandled Error:", error);
     return {
-      status: "error",
-      message: "Something went wrong!!: " + (error as Error).message,
+      status: 500,
+      message: "Something went wrong!!: ",
     };
   });
 
@@ -58,5 +62,5 @@ if (env !== "production") {
     );
   });
 }
-
-export default app;
+// Export type เพื่อใช้กับ Eden
+export type app = typeof app;

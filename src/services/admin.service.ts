@@ -59,6 +59,39 @@ const adminService = {
       throw error(500, err);
     }
   },
+  deleteUser: async (id: string) => {
+    logger.info(`[ADMIN][deleteUser] Start {"id": "${id}"}`);
+    try {
+      if (!id || !ObjectId.isValid(id) || "") {
+        logger.warn("[ADMIN][deleteUser] InvalidId");
+        return errMsg.InvalidId;
+      }
+
+      // ตรวจสอบว่ามีผู้ใช้นี้หรือไม่ก่อนลบ
+      const existingUser = await prisma.user.findUnique({
+        where: { id },
+      });
+
+      if (!existingUser) {
+        logger.warn("[ADMIN][deleteUser] UserNotFound");
+        return errMsg.UserNotFound;
+      }
+
+      await prisma.user.delete({
+        where: { id },
+      });
+
+      logger.info("[ADMIN][deleteUser] Success");
+
+      return {
+        status: 200,
+        message: `ลบผู้ใช้งานสําเร็จ`,
+      };
+    } catch (err) {
+      logger.error("[ADMIN][deleteUser] Error:", err);
+      throw error(500, err);
+    }
+  },
 };
 
 export { adminService };

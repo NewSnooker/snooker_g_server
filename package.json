@@ -8,12 +8,14 @@
   "dependencies": {
     "@elysiajs/cookie": "^0.8.0",
     "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/eden": "^1.2.0",
     "@elysiajs/jwt": "^1.2.0",
     "@elysiajs/swagger": "^1.2.2",
     "@prisma/client": "^6.6.0",
     "@sinclair/typebox": "^0.34.33",
     "bcrypt": "^5.1.1",
     "elysia": "^1.2.25",
+    "google-auth-library": "^9.15.1",
     "mongodb": "^6.15.0",
     "swagger-ui": "^5.21.0",
     "winston": "^3.17.0",
@@ -21,6 +23,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/node": "^22.15.1",
     "bun-types": "^1.2.10",
     "prisma": "^6.6.0"
   },

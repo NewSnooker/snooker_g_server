@@ -1,7 +1,7 @@
 // src/services/user.service.ts
 import { PrismaClient } from "@prisma/client";
 import { Static } from "@sinclair/typebox";
-import { userSchema } from "../schema/user.schema";
+import { avatarSchema, userBodySchema } from "../schema/user.schema";
 import { error } from "elysia";
 import { ObjectId } from "mongodb";
 import { errMsg } from "@/config/message.error";
@@ -91,7 +91,7 @@ const userService = {
     }
   },
 
-  updateUser: async (id: string, user: Static<typeof userSchema>) => {
+  updateUser: async (id: string, user: Static<typeof userBodySchema>) => {
     logger.info(`[USER][updateUser] Start {"id": "${id}", "user": "${user}"}`);
     try {
       if (!id || !ObjectId.isValid(id)) {
@@ -137,37 +137,75 @@ const userService = {
       throw error(500, err);
     }
   },
-
-  deleteUser: async (id: string) => {
-    logger.info(`[USER][deleteUser] Start {"id": "${id}"}`);
+  updateAvatar: async (id: string, avatar: Static<typeof avatarSchema>) => {
+    logger.info(`[USER][updateAvatar] Start {"id": "${id}""}`);
     try {
-      if (!id || !ObjectId.isValid(id) || "") {
-        logger.warn("[USER][deleteUser] InvalidId");
+      if (!id || !ObjectId.isValid(id)) {
+        logger.warn("[USER][updateAvatar] InvalidId");
         return errMsg.InvalidId;
       }
+      if (!avatar) {
+        logger.warn("[USER][updateAvatar] InvalidUserData");
+        return errMsg.InvalidUserData;
+      }
 
-      // ตรวจสอบว่ามีผู้ใช้นี้หรือไม่ก่อนลบ
+      const existingAvatar = await prisma.imageUrl.findUnique({
+        where: { id },
+      });
+
+      if (!existingAvatar) {
+        logger.warn("[USER][updateAvatar] ImageIdNotFound");
+        return errMsg.ImageIdNotFound;
+      }
+      await prisma.imageUrl.update({
+        where: { id },
+        data: avatar,
+      });
+
+      logger.info("[USER][updateAvatar] Success");
+
+      return {
+        status: 200,
+        message: `แก้ไขรูปโปรไฟล์สําเร็จ`,
+      };
+    } catch (err) {
+      logger.error("[USER][updateAvatar] Error:", err);
+      throw error(500, err);
+    }
+  },
+  updateUsername: async (id: string, username: string) => {
+    logger.info(`[USER][updateUsername] Start {"id": "${id}""}`);
+    try {
+      if (!id || !ObjectId.isValid(id)) {
+        logger.warn("[USER][updateUsername] InvalidId");
+        return errMsg.InvalidId;
+      }
+      if (!username) {
+        logger.warn("[USER][updateUsername] InvalidUserData");
+        return errMsg.InvalidUserData;
+      }
+
       const existingUser = await prisma.user.findUnique({
         where: { id },
       });
 
       if (!existingUser) {
-        logger.warn("[USER][deleteUser] UserNotFound");
+        logger.warn("[USER][updateUsername] UserNotFound");
         return errMsg.UserNotFound;
       }
-
-      await prisma.user.delete({
+      await prisma.user.update({
         where: { id },
+        data: { username },
       });
 
-      logger.info("[USER][deleteUser] Success");
+      logger.info("[USER][updateUsername] Success");
 
       return {
         status: 200,
-        message: `ลบผู้ใช้งานสําเร็จ`,
+        message: `แก้ไขรูปโปรไฟล์สําเร็จ`,
       };
     } catch (err) {
-      logger.error("[USER][deleteUser] Error:", err);
+      logger.error("[USER][updateUsername] Error:", err);
       throw error(500, err);
     }
   },

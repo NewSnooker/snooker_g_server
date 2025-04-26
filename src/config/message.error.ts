@@ -15,9 +15,21 @@ export const errMsg = {
     status: 409,
     message: "มีอีเมลนี้ในระบบแล้ว",
   },
+  UsernameExists: {
+    status: 409,
+    message: "มีชื่อผู้ใช้นี้ในระบบแล้ว",
+  },
+  GoogleIdExists: {
+    status: 409,
+    message: "มีไอดี Google นี้ในระบบแล้ว",
+  },
   UserNotFound: {
     status: 404,
     message: "ไม่พบผู้ใช้",
+  },
+  ImageIdNotFound: {
+    status: 404,
+    message: "ไม่พบไอดีของรูปภาพ",
   },
   Unauthorized: {
     status: 401,

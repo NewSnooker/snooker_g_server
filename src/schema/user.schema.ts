@@ -1,6 +1,7 @@
 import { t } from "elysia";
+import { imageUrlSchema } from "./common.schema";
 
-export const userSchema = t.Object({
+export const userBodySchema = t.Object({
   username: t.String({ minLength: 5, maxLength: 20 }),
   email: t.String({
     pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
@@ -25,13 +26,21 @@ export const userSignInSchema = t.Object({
     pattern: "[a-zA-Z0-9]{8,20}",
   }),
 });
+export const googleSignInSchema = t.Object({
+  idToken: t.String(),
+});
 
-export const userRes = t.Object({
+export const userResSchema = t.Object({
   id: t.String(),
   username: t.String(),
   email: t.String(),
-  imageUrl: t.Union([t.String(), t.Null()]), // <--- อนุญาตให้เป็น null ได้
+  imageUrl: imageUrlSchema,
   tokenVersion: t.Number(),
   createdAt: t.Date(),
   updatedAt: t.Date(),
+});
+export const avatarSchema = t.Object({
+  key: t.String(),
+  name: t.String(),
+  url: t.String(),
 });

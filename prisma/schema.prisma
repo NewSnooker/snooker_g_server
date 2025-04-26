@@ -7,13 +7,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
 model User {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  email        String   @unique
-  password     String
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  email        String       @unique
+  password     String?
+  provider     AuthProvider @default(LOCAL)
+  googleId     String?
   username     String
-  imageUrl     String?
-  tokenVersion Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  imageUrl     ImageUrl     @relation(fields: [imageUrlId], references: [id])
+  tokenVersion Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  imageUrlId   String       @db.ObjectId
+}
+
+model ImageUrl {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  key  String
+  name String
+  url  String
+  User User[]
 }
