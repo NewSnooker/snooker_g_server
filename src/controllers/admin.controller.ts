@@ -1,9 +1,9 @@
-import { Elysia, error, t } from "elysia";
+import { Elysia, t } from "elysia";
 import { msgSchema } from "../schema/common.schema";
-import { errMsg } from "@/config/message.error";
 import { adminService } from "@/services/admin.service";
 import { authContext } from "@/interface/common.interface";
 import { logger } from "@/utils/logger";
+import { errMsg } from "@/config/message.error";
 
 export const adminController = new Elysia().group(
   "/admin",

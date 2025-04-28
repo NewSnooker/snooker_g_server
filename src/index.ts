@@ -16,7 +16,12 @@ const env = process.env.NODE_ENV || "development";
 const app = new Elysia()
   // ตกแต่งด้วย winston logger
   .decorate("logger", logger)
-  .use(cookie())
+  .use(
+    cookie({
+      secret: [process.env.COOKIE_SECRET || "fallback-secret-for-dev"],
+      signed: false,
+    })
+  )
   .use(
     jwt({
       name: "jwt",
