@@ -5,7 +5,7 @@ export const msgSchema = t.Object({
   message: t.String(),
 });
 
-export const imageUrlSchema = t.Object({
+export const imageSchema = t.Object({
   id: t.String(),
   key: t.String(),
   name: t.String(),

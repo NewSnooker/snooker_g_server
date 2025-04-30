@@ -26,7 +26,7 @@ const userService = {
             email: true,
             createdAt: true,
             updatedAt: true,
-            imageUrl: true,
+            image: true,
             tokenVersion: true,
           },
         }),
@@ -68,7 +68,7 @@ const userService = {
           id: true,
           username: true,
           email: true,
-          imageUrl: true,
+          image: true,
           tokenVersion: true,
           createdAt: true,
           updatedAt: true,
@@ -149,7 +149,7 @@ const userService = {
         return errMsg.InvalidUserData;
       }
 
-      const existingAvatar = await prisma.imageUrl.findUnique({
+      const existingAvatar = await prisma.image.findUnique({
         where: { id },
       });
 
@@ -157,7 +157,7 @@ const userService = {
         logger.warn("[USER][updateAvatar] ImageIdNotFound");
         return errMsg.ImageIdNotFound;
       }
-      await prisma.imageUrl.update({
+      await prisma.image.update({
         where: { id },
         data: avatar,
       });

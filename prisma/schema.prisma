@@ -7,29 +7,199 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id              String                @id @default(auto()) @map("_id") @db.ObjectId
+  email           String                @unique
+  password        String?
+  provider        AuthProvider          @default(LOCAL)
+  googleId        String?
+  username        String
+  image           Image                 @relation(fields: [imageId], references: [id])
+  imageId         String                @db.ObjectId
+  tokenVersion    Int                   @default(0)
+  reviews         Review[]
+  games           UserGameInteraction[]
+  scores          GameScore[]
+  savedGames      SavedGame[]
+  hostedRooms     GameRoom[]            @relation("RoomHost")
+  rooms           RoomPlayer[]
+  invitesSent     GameInvite[]          @relation("Inviter")
+  invitesReceived GameInvite[]          @relation("Invitee")
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+}
+
 enum AuthProvider {
   LOCAL
   GOOGLE
 }
 
-model User {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
-  email        String       @unique
-  password     String?
-  provider     AuthProvider @default(LOCAL)
-  googleId     String?
-  username     String
-  imageUrl     ImageUrl     @relation(fields: [imageUrlId], references: [id])
-  tokenVersion Int          @default(0)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  imageUrlId   String       @db.ObjectId
+model Category {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  slug        String   @unique // เพิ่มเพื่อใช้ใน URL (เช่น /category/chess)
+  description String?
+  games       Game[]   @relation(fields: [gameIds], references: [id])
+  gameIds     String[] @db.ObjectId
 }
 
-model ImageUrl {
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String?
+  rating    Int // เพิ่มเพื่อให้คะแนนเกม (เช่น 1-5)
+  game      Game     @relation(fields: [gameId], references: [id])
+  gameId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.ObjectId
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Image {
   id   String @id @default(auto()) @map("_id") @db.ObjectId
   key  String
   name String
   url  String
   User User[]
+  Game Game[]
+}
+
+model UserGameInteraction {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  game       Game     @relation(fields: [gameId], references: [id])
+  gameId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String   @db.ObjectId
+  playCount  Int      @default(0)
+  isFavorite Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([gameId, userId])
+}
+
+model Game {
+  id                  String                @id @default(auto()) @map("_id") @db.ObjectId
+  title               String
+  description         String
+  instructions        String?
+  thumbnail           Image                 @relation(fields: [thumbnailId], references: [id])
+  thumbnailId         String                @db.ObjectId
+  gamePath            String
+  gameType            GameType
+  categories          Category[]            @relation(fields: [categoryIds], references: [id])
+  categoryIds         String[]              @db.ObjectId
+  difficulty          Difficulty            @default(MEDIUM)
+  isActive            Boolean               @default(true)
+  highScores          GameScore[]
+  savedGames          SavedGame[]
+  rooms               GameRoom[]
+  tags                String[] // เพิ่มเพื่อการค้นหาและกรองเกม
+  averageRating       Float? // เพิ่มเพื่อเก็บคะแนนเฉลี่ยจากรีวิว
+  playTime            Int? // เพิ่มเพื่อระบุเวลาเล่นเฉลี่ย (นาที)
+  minPlayers          Int?
+  maxPlayers          Int?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  Review              Review[]
+  UserGameInteraction UserGameInteraction[]
+}
+
+enum GameType {
+  SINGLE_PLAYER // เกมเล่นคนเดียว
+  LOCAL_MULTIPLAYER // เกมเล่นหลายคนในเครื่องเดียว
+  MULTIPLAYER // เกมเล่นหลายคน
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  EXTREME
+}
+
+model GameScore {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  score        Int
+  game         Game     @relation(fields: [gameId], references: [id])
+  gameId       String   @db.ObjectId
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String   @db.ObjectId
+  achievements String[] // เพิ่มเพื่อเก็บความสำเร็จ (เช่น "First Win")
+  createdAt    DateTime @default(now())
+}
+
+model SavedGame {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  game      Game     @relation(fields: [gameId], references: [id])
+  gameId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.ObjectId
+  gameState Json
+  saveName  String? // เพิ่มเพื่อให้ตั้งชื่อการบันทึกได้
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GameRoom {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  code           String       @unique
+  isPrivate      Boolean      @default(false)
+  password       String?
+  maxPlayers     Int
+  currentPlayers Int          @default(0) // เพิ่มเพื่อนับผู้เล่นปัจจุบัน
+  game           Game         @relation(fields: [gameId], references: [id])
+  gameId         String       @db.ObjectId
+  host           User         @relation("RoomHost", fields: [hostId], references: [id])
+  hostId         String       @db.ObjectId
+  players        RoomPlayer[]
+  gameState      Json?
+  gameSettings   Json? // เพิ่มเพื่อเก็บการตั้งค่าเกม
+  status         RoomStatus   @default(WAITING)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  GameInvite     GameInvite[]
+}
+
+enum RoomStatus {
+  WAITING // รอผู้เล่น
+  PLAYING // กำลังเล่น
+  ENDED // จบเกม
+}
+
+model RoomPlayer {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  room       GameRoom @relation(fields: [roomId], references: [id])
+  roomId     String   @db.ObjectId
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String   @db.ObjectId
+  isReady    Boolean  @default(false) // พร้อมเล่นหรือไม่
+  playerData Json? // ข้อมูลการเล่นเฉพาะผู้เล่น (สำหรับเก็บข้อมูลระหว่างเล่น)
+  joinedAt   DateTime @default(now())
+
+  @@unique([roomId, userId]) // ผู้เล่นแต่ละคนอยู่ในห้องได้แค่ครั้งเดียว
+}
+
+model GameInvite {
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  room      GameRoom     @relation(fields: [roomId], references: [id])
+  roomId    String       @db.ObjectId
+  inviter   User         @relation("Inviter", fields: [inviterId], references: [id])
+  inviterId String       @db.ObjectId
+  invitee   User         @relation("Invitee", fields: [inviteeId], references: [id])
+  inviteeId String       @db.ObjectId
+  status    InviteStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  expiresAt DateTime
+
+  @@unique([roomId, inviterId, inviteeId])
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
 }

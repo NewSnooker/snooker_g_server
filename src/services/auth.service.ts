@@ -36,7 +36,7 @@ const authService = {
 
       user.password = await bcrypt.hash(user.password, SALT_ROUNDS);
 
-      const newImage = await prisma.imageUrl.create({
+      const newImage = await prisma.image.create({
         data: {
           key: "",
           name: "",
@@ -49,7 +49,7 @@ const authService = {
           email: user.email,
           password: user.password,
           provider: AuthProvider.LOCAL,
-          imageUrlId: newImage.id,
+          imageId: newImage.id,
         },
       });
       logger.info(`[AUTH][signUp] Success`);
@@ -158,7 +158,7 @@ const authService = {
 
       if (!user) {
         logger.info(`[AUTH][signInWithGoogle] Creating new user for ${email}`);
-        const newImage = await prisma.imageUrl.create({
+        const newImage = await prisma.image.create({
           data: {
             key: "",
             name: "",
@@ -170,7 +170,7 @@ const authService = {
           data: {
             email,
             username: name || "User01",
-            imageUrlId: newImage.id,
+            imageId: newImage.id,
             provider: AuthProvider.GOOGLE,
             googleId,
           },

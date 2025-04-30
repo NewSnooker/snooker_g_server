@@ -1,5 +1,5 @@
 import { t } from "elysia";
-import { imageUrlSchema } from "./common.schema";
+import { imageSchema } from "./common.schema";
 
 export const userBodySchema = t.Object({
   username: t.String({ minLength: 5, maxLength: 20 }),
@@ -34,7 +34,7 @@ export const userResSchema = t.Object({
   id: t.String(),
   username: t.String(),
   email: t.String(),
-  imageUrl: imageUrlSchema,
+  image: imageSchema,
   tokenVersion: t.Number(),
   createdAt: t.Date(),
   updatedAt: t.Date(),

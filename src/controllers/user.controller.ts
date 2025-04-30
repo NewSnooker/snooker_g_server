@@ -143,7 +143,7 @@ export const userController = new Elysia().group(
             }
           )
           .put(
-            "/avatar/:id",
+            "/me/avatar/:id",
             async ({ params: { id }, body, set }) => {
               const response = await userService.updateAvatar(id, body.avatar);
               set.status = response.status;
@@ -163,7 +163,7 @@ export const userController = new Elysia().group(
             }
           )
           .put(
-            "/username/:id",
+            "/me/username/:id",
             async ({ params: { id }, body, set }) => {
               const response = await userService.updateUsername(
                 id,
