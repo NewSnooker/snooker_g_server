@@ -27,6 +27,10 @@ export const authController = new Elysia().group(
             409: msgSchema,
             500: msgSchema,
           },
+          detail: {
+            summary: "Sign up",
+            description: "API สำหรับการสมัครสมาชิกใหม่",
+          },
         }
       )
       .post(
@@ -36,6 +40,7 @@ export const authController = new Elysia().group(
           if (response.status === 200) {
             const value = await jwt.sign({
               id: response.data.id,
+              roles: response.data.roles,
               tokenVersion: response.data.tokenVersion,
             });
             auth.set({
@@ -67,6 +72,10 @@ export const authController = new Elysia().group(
             409: msgSchema,
             500: msgSchema,
           },
+          detail: {
+            summary: "Sign in",
+            description: "API สำหรับการเข้าสู่ระบบด้วย email และ password",
+          },
         }
       ) // เพิ่ม Google Sign-In
       .post(
@@ -77,6 +86,7 @@ export const authController = new Elysia().group(
             // สร้าง JWT และเซ็ต cookie เหมือนเดิม
             const token = await jwt.sign({
               id: response.data.id,
+              roles: response.data.roles,
               tokenVersion: response.data.tokenVersion,
             });
             auth.set({
@@ -103,6 +113,10 @@ export const authController = new Elysia().group(
             400: msgSchema,
             500: msgSchema,
           },
+          detail: {
+            summary: "Sign in with Google",
+            description: "API สำหรับการเข้าสู่ระบบด้วย Google",
+          },
         }
       )
       .post(
@@ -116,6 +130,10 @@ export const authController = new Elysia().group(
           response: {
             200: msgSchema,
             500: msgSchema,
+          },
+          detail: {
+            summary: "Sign out",
+            description: "API สำหรับการออกจากระบบ",
           },
         }
       )

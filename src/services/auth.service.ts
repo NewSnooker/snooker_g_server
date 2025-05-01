@@ -11,12 +11,9 @@ import {
 } from "./common.service";
 import { logger } from "@/utils/logger";
 import { OAuth2Client } from "google-auth-library";
+import { DEFAULT_AVATAR_URL, SALT_ROUNDS } from "@/config/constant";
 
 const prisma = new PrismaClient();
-
-const SALT_ROUNDS = 10;
-export const DEFAULT_AVATAR_URL =
-  "https://0v6xwqiijv.ufs.sh/f/MjBp0VW6yJdHp5Qk7oX2N6fJGvLb3UVjDXg4QcC1E9rdP8no";
 
 const authService = {
   signUp: async (user: Static<typeof userBodySchema>) => {
@@ -111,7 +108,7 @@ const authService = {
         message: "เข้าสู่ระบบสำเร็จ",
         data: {
           id: existingUser.id,
-          email: existingUser.email,
+          roles: existingUser.roles,
           tokenVersion: existingUser.tokenVersion,
         },
       };
@@ -183,6 +180,7 @@ const authService = {
         message: "เข้าสู่ระบบด้วย Google สำเร็จ",
         data: {
           id: user.id,
+          roles: user.roles,
           tokenVersion: user.tokenVersion,
         },
       };

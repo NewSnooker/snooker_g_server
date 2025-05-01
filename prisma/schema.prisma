@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
 model User {
   id              String                @id @default(auto()) @map("_id") @db.ObjectId
   email           String                @unique
@@ -17,6 +23,7 @@ model User {
   image           Image                 @relation(fields: [imageId], references: [id])
   imageId         String                @db.ObjectId
   tokenVersion    Int                   @default(0)
+  roles           Role[]                @default([USER]) // Default เป็น USER
   reviews         Review[]
   games           UserGameInteraction[]
   scores          GameScore[]
@@ -27,6 +34,7 @@ model User {
   invitesReceived GameInvite[]          @relation("Invitee")
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
+  deletedAt       DateTime? // เพิ่ม field นี้สำหรับ soft delete
 }
 
 enum AuthProvider {

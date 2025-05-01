@@ -1,18 +1,65 @@
 // src/services/user.service.ts
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import { error } from "elysia";
 import { ObjectId } from "mongodb";
 import { errMsg } from "@/config/message.error";
 import { logger } from "@/utils/logger";
+import { hasAdminRole, hasSuperAdminRole } from "@/utils/auth";
 
 const prisma = new PrismaClient();
 
 const adminService = {
-  forceLogoutById: async (id: string) => {
-    logger.info(`[ADMIN][forceLogoutById] Start {"id": "${id}"}`);
+  getAllUsersPaginated: async (page: number, limit: number) => {
+    logger.info(
+      `[USER][getAllUsersPaginated] Start {"page": "${page}", "limit": "${limit}"}`
+    );
+    try {
+      const skip = (page - 1) * limit;
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            image: true,
+            roles: true,
+            tokenVersion: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
+        prisma.user.count(),
+      ]);
+
+      if (users.length === 0) {
+        logger.warn("[USER][getAllUsersPaginated] UserNotFound");
+        return errMsg.UserNotFound;
+      }
+      logger.info("[USER][getAllUsersPaginated] Success");
+
+      return {
+        status: 200,
+        data: users,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (err) {
+      logger.error("[USER][getAllUsersPaginated] Error:", err);
+      throw error(500, err);
+    }
+  },
+  forceLogoutUserById: async (id: string) => {
+    logger.info(`[ADMIN][forceLogoutUserById] Start {"id": "${id}"}`);
+
     try {
       if (!id || !ObjectId.isValid(id)) {
-        logger.warn("[ADMIN][forceLogoutById] InvalidId");
+        logger.warn("[ADMIN][forceLogoutUserById] Invalid ID");
         return errMsg.InvalidId;
       }
       const user = await prisma.user.findUnique({
@@ -20,76 +67,107 @@ const adminService = {
       });
 
       if (!user) {
-        logger.warn("[ADMIN][forceLogoutById] UserNotFound");
+        logger.warn("[ADMIN][forceLogoutUserById] User not found");
         return errMsg.UserNotFound;
+      }
+      const isAdmin = hasAdminRole(user.roles);
+      const isSuperAdmin = hasSuperAdminRole(user.roles);
+
+      if (isAdmin || isSuperAdmin) {
+        logger.warn(
+          "[ADMIN][forceLogoutUserById] Forbidden - Admin/SuperAdmin cannot be logged out"
+        );
+        return errMsg.Forbidden;
       }
 
       await prisma.user.update({
-        where: { id: id },
-        data: { tokenVersion: { increment: 1 } },
+        where: { id },
+        data: {
+          tokenVersion: { increment: 1 },
+        },
       });
-      logger.info("[ADMIN][forceLogoutById] Success");
+
+      logger.info(
+        `[ADMIN][forceLogoutUserById] Success - ${user.username} logged out`
+      );
       return {
         status: 200,
         message: `ออกจากระบบของ ${user.username} สําเร็จ`,
       };
     } catch (err) {
-      logger.error("[ADMIN][forceLogoutById] Error:", err);
+      logger.error("[ADMIN][forceLogoutUserById] Error:", err);
       throw error(500, err);
     }
   },
-  forceLogoutAll: async () => {
-    logger.info("[ADMIN][forceLogoutAll] Start");
+  softDeleteUserById: async (id: string) => {
+    logger.info(`[ADMIN][softDeleteUserById] Start {"id": "${id}"}`);
     try {
-      await prisma.user.updateMany({
-        data: {
-          tokenVersion: {
-            increment: 1,
-          },
-        },
-      });
-
-      logger.info("[ADMIN][forceLogoutAll] Success");
-      return {
-        status: 200,
-        message: "บังคับให้ออกจากระบบทุกผู้ใช้เรียบร้อยแล้ว",
-      };
-    } catch (err) {
-      logger.error("[ADMIN][forceLogoutAll] Error:", err);
-      throw error(500, err);
-    }
-  },
-  deleteUser: async (id: string) => {
-    logger.info(`[ADMIN][deleteUser] Start {"id": "${id}"}`);
-    try {
-      if (!id || !ObjectId.isValid(id) || "") {
-        logger.warn("[ADMIN][deleteUser] InvalidId");
+      if (!id || !ObjectId.isValid(id)) {
+        logger.warn("[ADMIN][softDeleteUser] InvalidId");
         return errMsg.InvalidId;
       }
 
-      // ตรวจสอบว่ามีผู้ใช้นี้หรือไม่ก่อนลบ
-      const existingUser = await prisma.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { id },
       });
 
-      if (!existingUser) {
-        logger.warn("[ADMIN][deleteUser] UserNotFound");
+      if (!user) {
+        logger.warn("[ADMIN][softDeleteUser] UserNotFound");
         return errMsg.UserNotFound;
       }
 
-      await prisma.user.delete({
+      await prisma.user.update({
+        where: { id, deletedAt: null },
+        data: { deletedAt: new Date() },
+      });
+      logger.info("[ADMIN][softDeleteUser] Success");
+      return {
+        status: 200,
+        message: `ย้ายผู้ใช้งาน ${user.username} ไปถังขยะสำเร็จ`,
+      };
+    } catch (err) {
+      logger.error("[ADMIN][softDeleteUser] Error:", err);
+      throw err;
+    }
+  },
+  restoreUser: async (id: string) => {
+    logger.info(`[ADMIN][restoreUser] Start {"id": "${id}"}`);
+    try {
+      const user = await prisma.user.findUnique({
         where: { id },
       });
 
-      logger.info("[ADMIN][deleteUser] Success");
+      if (!user) {
+        logger.warn("[ADMIN][restoreUser] UserNotFound");
+        return errMsg.UserNotFound;
+      }
 
+      if (!user.deletedAt) {
+        logger.warn("[ADMIN][restoreUser] UserNotDeleted");
+        return errMsg.UserNotDeleted;
+      }
+      const isAdmin = hasAdminRole(user.roles);
+      const isSuperAdmin = hasSuperAdminRole(user.roles);
+
+      if (isAdmin || isSuperAdmin) {
+        logger.warn(
+          "[ADMIN][restoreUser] Forbidden - Admin/SuperAdmin cannot be restored"
+        );
+        return errMsg.Forbidden;
+      }
+
+      await prisma.user.update({
+        where: { id },
+        data: { deletedAt: null },
+      });
+      logger.info("[ADMIN][restoreUser] Success");
       return {
         status: 200,
-        message: `ลบผู้ใช้งานสําเร็จ`,
+        message: `กู้คืนผู้ใช้งาน ${user.username} สําเร็จ`,
       };
     } catch (err) {
-      logger.error("[ADMIN][deleteUser] Error:", err);
-      throw error(500, err);
+      logger.error("[ADMIN][restoreUser] Error:", err);
+      throw err;
     }
   },
 };

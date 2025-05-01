@@ -26,6 +26,7 @@ const app = new Elysia()
     jwt({
       name: "jwt",
       secret: process.env.JWT_SECRET || "fallback-secret-for-dev",
+      signed: true, // เปิดการลงนาม
     })
   )
   .use(
@@ -37,6 +38,7 @@ const app = new Elysia()
       maxAge: 86400, //👍 browser จำผล preflight ไว้ 24 ชม.
     })
   )
+  // ตรวจสอบ auth
   .derive(async ({ jwt, cookie: { auth } }) => {
     const authUser = await jwt.verify(auth.value);
     return { authUser };

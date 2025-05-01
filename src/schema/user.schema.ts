@@ -35,6 +35,7 @@ export const userResSchema = t.Object({
   username: t.String(),
   email: t.String(),
   image: imageSchema,
+  roles: t.Array(t.String()),
   tokenVersion: t.Number(),
   createdAt: t.Date(),
   updatedAt: t.Date(),

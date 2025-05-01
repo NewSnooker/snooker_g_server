@@ -12,6 +12,7 @@ export const getUserByEmailNoPassword = async (email: string) => {
       createdAt: true,
       updatedAt: true,
       tokenVersion: true,
+      roles: true,
     },
   });
 };

@@ -4,11 +4,8 @@ import { errMsg } from "@/config/message.error";
 import { authContext } from "@/interface/common.interface";
 import { logger } from "@/utils/logger";
 import { msgSchema } from "@/schema/common.schema";
-import {
-  avatarSchema,
-  userBodySchema,
-  userResSchema,
-} from "@/schema/user.schema";
+import { avatarSchema, userResSchema } from "@/schema/user.schema";
+import { hasUserRole } from "@/utils/auth";
 
 export const userController = new Elysia().group(
   "/user",
@@ -23,45 +20,15 @@ export const userController = new Elysia().group(
             logger.warn("[USER][beforeHandle] Unauthorized");
             return errMsg.Unauthorized;
           }
+          if (!hasUserRole(authUser.roles)) {
+            set.status = 403;
+            logger.warn("[USER][beforeHandle] Forbidden: Not an user");
+            return errMsg.Forbidden;
+          }
         },
       },
       (app) =>
         app
-          .get(
-            "/",
-            async ({ query, set }) => {
-              const page = Number(query?.page) || 1;
-              const limit = Number(query?.limit) || 10;
-              const response = await userService.getAllUsersPaginated(
-                page,
-                limit
-              );
-              set.status = response.status;
-              return response;
-            },
-            {
-              query: t.Object({
-                page: t.Optional(t.String()),
-                limit: t.Optional(t.String()),
-              }),
-              response: {
-                200: t.Object({
-                  status: t.Number(),
-                  data: t.Array(userResSchema),
-                  pagination: t.Object({
-                    total: t.Number(),
-                    page: t.Number(),
-                    limit: t.Number(),
-                    totalPages: t.Number(),
-                  }),
-                }),
-                401: msgSchema,
-                404: msgSchema,
-                500: msgSchema,
-              },
-            }
-          )
-
           .get(
             "/:id",
             async ({ params, set }) => {
@@ -79,37 +46,24 @@ export const userController = new Elysia().group(
                   data: userResSchema,
                 }),
                 400: msgSchema,
+                403: msgSchema,
                 404: msgSchema,
                 500: msgSchema,
               },
-            }
-          )
-          .put(
-            "/:id",
-            async ({ params, body, set }) => {
-              const response = await userService.updateUser(params.id, body);
-              set.status = response.status;
-              return response;
-            },
-            {
-              params: t.Object({
-                id: t.String(),
-              }),
-              body: userBodySchema,
-              response: {
-                200: msgSchema,
-                400: msgSchema,
-                404: msgSchema,
-                409: msgSchema,
-                500: msgSchema,
+              detail: {
+                summary: "Get user by id",
+                description: "API สำหรับผู้ใช้เพื่อดูข้อมูลผู้ใช้",
               },
             }
           )
-
           .get(
             "/me",
-            async ({ authUser, set, cookie: { auth } }: any) => {
-              // เรียกฟังก์ชัน getUserById โดยใช้ ID ของ authUser
+            async (context) => {
+              const {
+                authUser,
+                set,
+                cookie: { auth },
+              } = context as authContext;
               const user = await userService.getUserById(authUser.id);
 
               // ตรวจสอบว่า tokenVersion ของ user ตรงกับที่ authUser ส่งมา
@@ -140,6 +94,10 @@ export const userController = new Elysia().group(
                 404: msgSchema,
                 500: msgSchema,
               },
+              detail: {
+                summary: "Get me",
+                description: "API สำหรับผู้ใช้เพื่อดูข้อมูลตัวเอง",
+              },
             }
           )
           .put(
@@ -159,6 +117,10 @@ export const userController = new Elysia().group(
                 404: msgSchema,
                 409: msgSchema,
                 500: msgSchema,
+              },
+              detail: {
+                summary: "Update avatar",
+                description: "API สำหรับผู้ใช้เพื่ออัพเดตรูปโปรไฟล์",
               },
             }
           )
@@ -182,6 +144,10 @@ export const userController = new Elysia().group(
                 404: msgSchema,
                 409: msgSchema,
                 500: msgSchema,
+              },
+              detail: {
+                summary: "Update username",
+                description: "API สำหรับผู้ใช้เพื่ออัพเดตชื่อผู้ใช้",
               },
             }
           )
