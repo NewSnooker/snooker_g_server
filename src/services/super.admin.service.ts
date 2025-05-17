@@ -9,10 +9,12 @@ const prisma = new PrismaClient();
 
 const superAdminService = {
   forceLogoutAll: async (id: string) => {
-    logger.info(`[SUPER_ADMIN][forceLogoutAll] Start by {"id": "${id}"}`);
+    logger.info(
+      `[SUPER_ADMIN][forceLogoutAll] Start by super admin {"id": "${id}"}`
+    );
     try {
       await prisma.user.updateMany({
-        where: { id: { not: id } },
+        where: { id: { not: id }, deletedAt: null, isActive: true },
         data: { tokenVersion: { increment: 1 } },
       });
 
@@ -41,6 +43,11 @@ const superAdminService = {
       if (!user) {
         logger.warn("[SUPER_ADMIN][forceLogoutUserById] User not found");
         return errMsg.UserNotFound;
+      }
+
+      if (user.deletedAt) {
+        logger.warn("[SUPER_ADMIN][forceLogoutUserById] User deleted");
+        return errMsg.UserDeleted;
       }
 
       await prisma.user.update({
@@ -79,8 +86,13 @@ const superAdminService = {
         return errMsg.UserNotFound;
       }
 
+      if (user.deletedAt) {
+        logger.warn("[SUPER_ADMIN][softDeleteUser] User deleted");
+        return errMsg.UserDeleted;
+      }
+
       await prisma.user.update({
-        where: { id, deletedAt: null },
+        where: { id },
         data: { deletedAt: new Date() },
       });
       logger.info("[SUPER_ADMIN][softDeleteUser] Success");
@@ -94,10 +106,10 @@ const superAdminService = {
     }
   },
   hardDeleteUserById: async (id: string) => {
-    logger.info(`[ADMIN][hardDeleteUserById] Start {"id": "${id}"}`);
+    logger.info(`[SUPER_ADMIN][hardDeleteUserById] Start {"id": "${id}"}`);
     try {
       if (!id || !ObjectId.isValid(id)) {
-        logger.warn("[ADMIN][hardDeleteUserById] InvalidId");
+        logger.warn("[SUPER_ADMIN][hardDeleteUserById] InvalidId");
         return errMsg.InvalidId;
       }
 
@@ -106,8 +118,13 @@ const superAdminService = {
       });
 
       if (!user) {
-        logger.warn("[ADMIN][hardDeleteUserById] UserNotFound");
+        logger.warn("[SUPER_ADMIN][hardDeleteUserById] UserNotFound");
         return errMsg.UserNotFound;
+      }
+
+      if (user.deletedAt) {
+        logger.warn("[SUPER_ADMIN][softDeleteUser] User deleted");
+        return errMsg.UserDeleted;
       }
 
       await prisma.$transaction(async (tx) => {
@@ -122,13 +139,13 @@ const superAdminService = {
         await tx.user.delete({ where: { id } });
       });
 
-      logger.info("[ADMIN][hardDeleteUserById] Success");
+      logger.info("[SUPER_ADMIN][hardDeleteUserById] Success");
       return {
         status: 200,
         message: `ลบผู้ใช้งาน ${user.username} ถาวรสำเร็จ`,
       };
     } catch (err) {
-      logger.error("[ADMIN][hardDeleteUserById] Error:", err);
+      logger.error("[SUPER_ADMIN][hardDeleteUserById] Error:", err);
       throw error(500, err);
     }
   },

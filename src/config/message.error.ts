@@ -11,6 +11,10 @@ export const errMsg = {
     status: 400,
     message: "ผู้ใช้ยังไม่ถูกลบ",
   },
+  UserDeleted: {
+    status: 400,
+    message: "ผู้ใช้ถูกลบแล้ว",
+  },
   TokenInvalidated: {
     status: 401,
     message: "โทเค็น หมดอายุ",

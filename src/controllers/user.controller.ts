@@ -32,7 +32,7 @@ export const userController = new Elysia().group(
           .get(
             "/:id",
             async ({ params, set }) => {
-              const response = await userService.getUserById(params.id);
+              const response = await userService.getActiveUserById(params.id);
               set.status = response.status;
               return response;
             },
@@ -64,30 +64,25 @@ export const userController = new Elysia().group(
                 set,
                 cookie: { auth },
               } = context as authContext;
-              const user = await userService.getUserById(authUser.id);
+              const user = await userService.getActiveUserById(authUser.id);
 
               // ตรวจสอบว่า tokenVersion ของ user ตรงกับที่ authUser ส่งมา
               if (
                 user.status === 200 &&
                 user.data.tokenVersion !== authUser.tokenVersion
               ) {
-                // ลบคุกกี้ (force logout)
-                // จากนั้นให้ middleware เตะ user ออก
-
                 auth.remove();
                 set.status = 403;
                 logger.warn("[USER][ME] TokenInvalidated");
                 return errMsg.TokenInvalidated;
               }
-
-              // ส่งข้อมูลผู้ใช้กลับเมื่อ tokenVersion ตรงกัน
-              return user; // { status: "success", data: user }
+              return user;
             },
             {
               response: {
                 200: t.Object({
                   status: t.Number(),
-                  data: userResSchema, // ควรเป็น schema ของ user
+                  data: userResSchema,
                 }),
                 401: msgSchema,
                 403: msgSchema,

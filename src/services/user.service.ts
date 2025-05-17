@@ -10,7 +10,7 @@ import { logger } from "@/utils/logger";
 const prisma = new PrismaClient();
 
 const userService = {
-  getUserById: async (id: string) => {
+  getActiveUserById: async (id: string) => {
     logger.info(`[USER][getUserById] Start {"id": "${id}"}`);
     try {
       if (!id || !ObjectId.isValid(id)) {
@@ -18,16 +18,20 @@ const userService = {
         return errMsg.InvalidId;
       }
       const user = await prisma.user.findUnique({
-        where: { id },
+        where: { id, isActive: true, deletedAt: null },
         select: {
           id: true,
           username: true,
           email: true,
+          provider: true,
+          imageId: true,
           image: true,
-          roles: true,
           tokenVersion: true,
+          roles: true,
+          isActive: true,
           createdAt: true,
           updatedAt: true,
+          deletedAt: true,
         },
       });
 
@@ -46,10 +50,13 @@ const userService = {
       throw error(500, err);
     }
   },
-  updateAvatar: async (id: string, avatar: Static<typeof avatarSchema>) => {
-    logger.info(`[USER][updateAvatar] Start {"id": "${id}""}`);
+  updateAvatar: async (
+    imageId: string,
+    avatar: Static<typeof avatarSchema>
+  ) => {
+    logger.info(`[USER][updateAvatar] Start {"imageId": "${imageId}""}`);
     try {
-      if (!id || !ObjectId.isValid(id)) {
+      if (!imageId || !ObjectId.isValid(imageId)) {
         logger.warn("[USER][updateAvatar] InvalidId");
         return errMsg.InvalidId;
       }
@@ -59,7 +66,7 @@ const userService = {
       }
 
       const existingAvatar = await prisma.image.findUnique({
-        where: { id },
+        where: { id: imageId },
       });
 
       if (!existingAvatar) {
@@ -67,7 +74,7 @@ const userService = {
         return errMsg.ImageIdNotFound;
       }
       await prisma.image.update({
-        where: { id },
+        where: { id: imageId },
         data: avatar,
       });
 

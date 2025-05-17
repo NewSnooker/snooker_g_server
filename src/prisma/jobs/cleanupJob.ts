@@ -1,9 +1,10 @@
 // src/prisma/jobs/cleanupJob.ts
 import cron from "node-cron";
-import { prisma } from "../client";
 import { logger } from "../../utils/logger";
+import { PrismaClient } from "@prisma/client";
 
 export function startCleanupJob() {
+  const prisma = new PrismaClient();
   // รันทุกวันเวลาเที่ยงคืน (0:00)
   cron.schedule("0 0 * * *", async () => {
     try {

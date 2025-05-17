@@ -6,8 +6,8 @@ import { error } from "elysia";
 import { errMsg } from "@/config/message.error";
 import bcrypt from "bcrypt";
 import {
-  getUserByEmailAllFields,
-  getUserByEmailNoPassword,
+  getActiveUserByEmail,
+  verifyActiveUserByEmail,
 } from "./common.service";
 import { logger } from "@/utils/logger";
 import { OAuth2Client } from "google-auth-library";
@@ -24,7 +24,7 @@ const authService = {
         return errMsg.InvalidUserData;
       }
 
-      const existingEmail = await getUserByEmailNoPassword(user.email);
+      const existingEmail = await verifyActiveUserByEmail(user.email);
 
       if (existingEmail) {
         logger.warn("[AUTH][signUp] EmailExists");
@@ -47,6 +47,7 @@ const authService = {
           password: user.password,
           provider: AuthProvider.LOCAL,
           imageId: newImage.id,
+          deletedAt: null,
         },
       });
       logger.info(`[AUTH][signUp] Success`);
@@ -57,6 +58,82 @@ const authService = {
     } catch (err) {
       logger.error("[AUTH][signUp] Error:", err);
       throw error(500, err);
+    }
+  },
+  signInWithGoogle: async (idToken: string) => {
+    logger.info(`[AUTH][signInWithGoogle] verifying token`);
+
+    if (!idToken) {
+      logger.warn("[AUTH][signInWithGoogle] Missing idToken");
+      return errMsg.InvalidUserData;
+    }
+
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      logger.error("[AUTH][signInWithGoogle] Missing GOOGLE_CLIENT_ID");
+      throw new Error(
+        "Server configuration error: GOOGLE_CLIENT_ID is not set"
+      );
+    }
+
+    const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email_verified) {
+        logger.warn("[AUTH][signInWithGoogle] Invalid Google token payload");
+        return errMsg.InvalidUserData;
+      }
+
+      const { sub: googleId, email, name, picture } = payload;
+
+      if (!email) {
+        logger.warn("[AUTH][signInWithGoogle] Email is undefined");
+        return errMsg.InvalidUserData;
+      }
+
+      let user = await verifyActiveUserByEmail(email);
+
+      if (!user) {
+        logger.info(`[AUTH][signInWithGoogle] Creating new user for ${email}`);
+        const newImage = await prisma.image.create({
+          data: {
+            key: "",
+            name: "",
+            url: picture || DEFAULT_AVATAR_URL,
+          },
+        });
+
+        user = await prisma.user.create({
+          data: {
+            username: name || "Unknown",
+            email,
+            googleId,
+            provider: AuthProvider.GOOGLE,
+            imageId: newImage.id,
+            deletedAt: null,
+          },
+        });
+      }
+
+      logger.info("[AUTH][signInWithGoogle] Success");
+      return {
+        status: 200,
+        message: "เข้าสู่ระบบด้วย Google สำเร็จ",
+        data: {
+          id: user.id,
+          roles: user.roles,
+          tokenVersion: user.tokenVersion,
+        },
+      };
+    } catch (err) {
+      logger.error("[AUTH][signInWithGoogle] Unexpected error:", err);
+      return {
+        status: 500,
+        message: "An unexpected error occurred during Google sign-in",
+      };
     }
   },
   signIn: async (user: Static<typeof userSignInSchema>) => {
@@ -70,7 +147,7 @@ const authService = {
 
     try {
       // 2. หา user ในฐานข้อมูล
-      const existingUser = await getUserByEmailAllFields(user.email);
+      const existingUser = await getActiveUserByEmail(user.email);
 
       if (!existingUser) {
         logger.warn("[AUTH][signIn] UserNotFound");
@@ -115,81 +192,6 @@ const authService = {
     } catch (err) {
       logger.error("[AUTH][signIn] Error:", err);
       throw error(500, err);
-    }
-  },
-  signInWithGoogle: async (idToken: string) => {
-    logger.info(`[AUTH][signInWithGoogle] verifying token`);
-
-    if (!idToken) {
-      logger.warn("[AUTH][signInWithGoogle] Missing idToken");
-      return errMsg.InvalidUserData;
-    }
-
-    if (!process.env.GOOGLE_CLIENT_ID) {
-      logger.error("[AUTH][signInWithGoogle] Missing GOOGLE_CLIENT_ID");
-      throw new Error(
-        "Server configuration error: GOOGLE_CLIENT_ID is not set"
-      );
-    }
-
-    const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-    try {
-      const ticket = await googleClient.verifyIdToken({
-        idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
-      const payload = ticket.getPayload();
-      if (!payload || !payload.email_verified) {
-        logger.warn("[AUTH][signInWithGoogle] Invalid Google token payload");
-        return errMsg.InvalidUserData;
-      }
-
-      const { sub: googleId, email, name, picture } = payload;
-
-      if (!email) {
-        logger.warn("[AUTH][signInWithGoogle] Email is undefined");
-        return errMsg.InvalidUserData;
-      }
-
-      let user = await getUserByEmailNoPassword(email);
-
-      if (!user) {
-        logger.info(`[AUTH][signInWithGoogle] Creating new user for ${email}`);
-        const newImage = await prisma.image.create({
-          data: {
-            key: "",
-            name: "",
-            url: picture || DEFAULT_AVATAR_URL,
-          },
-        });
-
-        user = await prisma.user.create({
-          data: {
-            email,
-            username: name || "User01",
-            imageId: newImage.id,
-            provider: AuthProvider.GOOGLE,
-            googleId,
-          },
-        });
-      }
-
-      logger.info("[AUTH][signInWithGoogle] Success");
-      return {
-        status: 200,
-        message: "เข้าสู่ระบบด้วย Google สำเร็จ",
-        data: {
-          id: user.id,
-          roles: user.roles,
-          tokenVersion: user.tokenVersion,
-        },
-      };
-    } catch (err) {
-      logger.error("[AUTH][signInWithGoogle] Unexpected error:", err);
-      return {
-        status: 500,
-        message: "An unexpected error occurred during Google sign-in",
-      };
     }
   },
   signOut: async (auth: any) => {

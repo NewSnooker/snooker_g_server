@@ -11,3 +11,13 @@ export const imageSchema = t.Object({
   name: t.String(),
   url: t.String(),
 });
+
+export const tableQuerySchema = t.Object({
+  page: t.String(),
+  pageSize: t.String(),
+  search: t.Optional(t.String()),
+  sortBy: t.Optional(t.String()),
+  sortOrder: t.Optional(t.String()),
+  roles: t.Optional(t.Array(t.String())),
+  isActive: t.Optional(t.Boolean()),
+});

@@ -2,23 +2,19 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export const getUserByEmailNoPassword = async (email: string) => {
+export const verifyActiveUserByEmail = async (email: string) => {
   return await prisma.user.findUnique({
-    where: { email },
+    where: { email, isActive: true, deletedAt: null },
     select: {
       id: true,
-      email: true,
-      username: true,
-      createdAt: true,
-      updatedAt: true,
       tokenVersion: true,
       roles: true,
     },
   });
 };
 
-export const getUserByEmailAllFields = async (email: string) => {
+export const getActiveUserByEmail = async (email: string) => {
   return await prisma.user.findUnique({
-    where: { email },
+    where: { email, isActive: true, deletedAt: null },
   });
 };
