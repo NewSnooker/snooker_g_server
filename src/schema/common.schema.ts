@@ -20,4 +20,6 @@ export const tableQuerySchema = t.Object({
   sortOrder: t.Optional(t.String()),
   roles: t.Optional(t.Array(t.String())),
   isActive: t.Optional(t.Boolean()),
+  createdAtStart: t.Optional(t.String()),
+  createdAtEnd: t.Optional(t.String()),
 });

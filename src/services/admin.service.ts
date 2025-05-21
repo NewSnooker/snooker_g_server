@@ -1,14 +1,17 @@
 // src/services/user.service.ts
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import { error } from "elysia";
 import { ObjectId } from "mongodb";
 import { errMsg } from "@/config/message.error";
 import { logger } from "@/utils/logger";
+import { denyIfAdminOrSuperAdmin, validateRoles } from "@/utils/auth";
 import {
-  denyIfAdminOrSuperAdmin,
-  hasAdminRole,
-  hasSuperAdminRole,
-} from "@/utils/auth";
+  isAfter,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+} from "date-fns";
 
 const prisma = new PrismaClient();
 
@@ -20,19 +23,48 @@ const adminService = {
     roles?: string[],
     isActive?: boolean,
     sortBy?: string,
-    sortOrder?: "asc" | "desc"
+    sortOrder?: "asc" | "desc",
+    createdAtStart?: string,
+    createdAtEnd?: string
   ) => {
     logger.info(
-      `[ADMIN][getAllUsersPaginated] Start {"page": "${page}", "pageSize": "${pageSize}", "search": "${search}", "role": "${roles}", "isActive": "${isActive}", "sortBy": "${sortBy}", "sortOrder": "${sortOrder}"}`
+      `[ADMIN][getAllUsersPaginated] Start {"page": "${page}", "pageSize": "${pageSize}", "search": "${search}", "roles": "${roles}", "isActive": "${isActive}", "sortBy": "${sortBy}", "sortOrder": "${sortOrder}", "createdAtStart": "${createdAtStart}", "createdAtEnd": "${createdAtEnd}"}`
     );
 
     try {
       const skip = (page - 1) * pageSize;
 
-      // สร้าง where clause ตามเงื่อนไขการกรอง
+      // Validation for createdAt
+      if (createdAtStart || createdAtEnd) {
+        const startDate = createdAtStart ? new Date(createdAtStart) : undefined;
+        const endDate = createdAtEnd ? new Date(createdAtEnd) : undefined;
+
+        if (startDate && isNaN(startDate.getTime())) {
+          throw error(
+            400,
+            `Invalid createdAtStart date format: ${createdAtStart}`
+          );
+        }
+        if (endDate && isNaN(endDate.getTime())) {
+          throw error(400, `Invalid createdAtEnd date format: ${createdAtEnd}`);
+        }
+        if (startDate && endDate && isAfter(startDate, endDate)) {
+          throw error(400, "createdAtStart must be before createdAtEnd");
+        }
+      }
+
+      // Validation for roles
+      if (roles && roles.length > 0) {
+        validateRoles(roles as Role[]);
+      }
+
+      // Validation for isActive
+      if (isActive !== undefined && typeof isActive !== "boolean") {
+        throw error(400, "isActive must be true or false");
+      }
+
       const where: any = { deletedAt: null };
 
-      // เพิ่มเงื่อนไขการค้นหา
       if (search) {
         where.OR = [
           { username: { contains: search, mode: "insensitive" } },
@@ -44,17 +76,27 @@ const adminService = {
         where.roles = { hasSome: roles };
       }
 
-      // เพิ่มเงื่อนไขการกรองตามสถานะ
       if (isActive !== undefined) {
         where.isActive = isActive;
       }
 
-      // สร้าง orderBy clause
+      if (createdAtStart || createdAtEnd) {
+        where.createdAt = {};
+        if (createdAtStart && !isNaN(new Date(createdAtStart).getTime())) {
+          where.createdAt.gte = new Date(createdAtStart);
+        }
+        if (createdAtEnd && !isNaN(new Date(createdAtEnd).getTime())) {
+          where.createdAt.lte = new Date(createdAtEnd);
+        }
+        if (!where.createdAt.gte && !where.createdAt.lte) {
+          delete where.createdAt;
+        }
+      }
+
       const orderBy: any = {};
       if (sortBy) {
         orderBy[sortBy] = sortOrder || "asc";
       } else {
-        // ค่าเริ่มต้นคือเรียงตาม createdAt จากใหม่ไปเก่า
         orderBy.createdAt = "desc";
       }
 

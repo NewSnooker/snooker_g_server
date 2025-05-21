@@ -35,7 +35,7 @@ const app = new Elysia()
       allowedHeaders: ["Content-Type", "Authorization"],
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
       credentials: true,
-      maxAge: 86400, //👍 browser จำผล preflight ไว้ 24 ชม.
+      maxAge: 86400 * 7, //👍 browser จำผล preflight ไว้ 7 วัน
     })
   )
   // ตรวจสอบ auth

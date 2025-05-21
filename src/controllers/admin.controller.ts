@@ -93,6 +93,9 @@ export const adminController = new Elysia().group(
             const sortBy = query.sortBy;
             const sortOrder = query.sortOrder as "asc" | "desc" | undefined;
 
+            const createdAtStart = query.createdAtStart;
+            const createdAtEnd = query.createdAtEnd;
+
             const response = await adminService.getAllUsersPaginated(
               page,
               pageSize,
@@ -100,7 +103,9 @@ export const adminController = new Elysia().group(
               roles,
               isActive,
               sortBy,
-              sortOrder
+              sortOrder,
+              createdAtStart,
+              createdAtEnd
             );
 
             set.status = response.status;

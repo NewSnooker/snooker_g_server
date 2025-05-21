@@ -17,6 +17,7 @@
     "@prisma/client": "^6.7.0",
     "@sinclair/typebox": "^0.34.33",
     "bcrypt": "^5.1.1",
+    "date-fns": "^4.1.0",
     "elysia": "^1.2.25",
     "google-auth-library": "^9.15.1",
     "mongodb": "^6.15.0",
