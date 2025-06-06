@@ -36,6 +36,7 @@ model User {
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
   deletedAt       DateTime?
+  UploadedBy      TempUpload[]          @relation("UploadedBy")
 }
 
 enum AuthProvider {
@@ -72,6 +73,16 @@ model Image {
   url  String
   User User[]
   Game Game[]
+}
+
+model TempUpload {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  key          String
+  name         String
+  url          String
+  uploadedBy   User     @relation("UploadedBy", fields: [uploadedById], references: [id])
+  uploadedById String   @db.ObjectId
+  createdAt    DateTime @default(now())
 }
 
 model UserGameInteraction {

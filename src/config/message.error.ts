@@ -1,4 +1,16 @@
 export const errMsg = {
+  AdminCannotLogout: {
+    status: 403,
+    message: "ไม่สามารถ Logout Admin/SuperAdmin ได้",
+  },
+  AdminCannotDelete: {
+    status: 403,
+    message: "ไม่สามารถ ลบ Admin/SuperAdmin ได้",
+  },
+  AdminCannotRestore: {
+    status: 403,
+    message: "ไม่สามารถ กู้คืน Admin/SuperAdmin ได้",
+  },
   InvalidId: {
     status: 400,
     message: "รหัสผู้ใช้ไม่ถูกต้อง",
@@ -6,6 +18,10 @@ export const errMsg = {
   InvalidUserData: {
     status: 400,
     message: "ข้อมูลผู้ใช้ไม่ถูกต้อง",
+  },
+  CannotDeleteSelf: {
+    status: 400,
+    message: "ไม่สามารถลบตัวเองได้",
   },
   UserNotDeleted: {
     status: 400,
@@ -18,6 +34,10 @@ export const errMsg = {
   TokenInvalidated: {
     status: 401,
     message: "โทเค็น หมดอายุ",
+  },
+  TempNotFound: {
+    status: 404,
+    message: "ไม่พบไฟล์ชั่วคราว",
   },
   Unauthorized: {
     status: 401,

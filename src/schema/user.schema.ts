@@ -15,6 +15,14 @@ export const userBodySchema = t.Object({
     pattern: "[a-zA-Z0-9]{8,20}",
   }),
 });
+export const userUpdateBodySchema = t.Object({
+  username: t.String({ minLength: 5, maxLength: 20 }),
+  email: t.String({
+    pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+    minLength: 5,
+    maxLength: 30,
+  }),
+});
 export const userSignInSchema = t.Object({
   email: t.String({
     pattern: "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",

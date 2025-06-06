@@ -18,14 +18,6 @@ export function hasSuperAdminRole(roles: Role[]): boolean {
 export function hasAdminOrSuperAdminRole(roles: Role[]): boolean {
   return hasRequiredRole(roles, [Role.SUPER_ADMIN, Role.ADMIN]);
 }
-export function denyIfAdminOrSuperAdmin(roles: Role[]) {
-  if (hasAdminOrSuperAdminRole(roles)) {
-    logger.warn(
-      "[ADMIN][denyIfAdminOrSuperAdmin] Forbidden - Admin/SuperAdmin cannot be logged out"
-    );
-    return errMsg.Forbidden;
-  }
-}
 export function validateRoles(roles: Role[]): void {
   if (roles && roles.length > 0) {
     const validRoles = [Role.USER, Role.ADMIN, Role.SUPER_ADMIN];

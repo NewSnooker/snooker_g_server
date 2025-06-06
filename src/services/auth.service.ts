@@ -5,13 +5,11 @@ import { userBodySchema, userSignInSchema } from "../schema/user.schema";
 import { error } from "elysia";
 import { errMsg } from "@/config/message.error";
 import bcrypt from "bcrypt";
-import {
-  getActiveUserByEmail,
-  verifyActiveUserByEmail,
-} from "./common.service";
+
 import { logger } from "@/utils/logger";
 import { OAuth2Client } from "google-auth-library";
 import { DEFAULT_AVATAR_URL, SALT_ROUNDS } from "@/config/constant";
+import { commonService } from "./common.service";
 
 const prisma = new PrismaClient();
 
@@ -24,7 +22,9 @@ const authService = {
         return errMsg.InvalidUserData;
       }
 
-      const existingEmail = await verifyActiveUserByEmail(user.email);
+      const existingEmail = await commonService.verifyActiveUserByEmail(
+        user.email
+      );
 
       if (existingEmail) {
         logger.warn("[AUTH][signUp] EmailExists");
@@ -94,7 +94,7 @@ const authService = {
         return errMsg.InvalidUserData;
       }
 
-      let user = await verifyActiveUserByEmail(email);
+      let user = await commonService.verifyActiveUserByEmail(email);
 
       if (!user) {
         logger.info(`[AUTH][signInWithGoogle] Creating new user for ${email}`);
@@ -147,7 +147,7 @@ const authService = {
 
     try {
       // 2. หา user ในฐานข้อมูล
-      const existingUser = await getActiveUserByEmail(user.email);
+      const existingUser = await commonService.getActiveUserByEmail(user.email);
 
       if (!existingUser) {
         logger.warn("[AUTH][signIn] UserNotFound");

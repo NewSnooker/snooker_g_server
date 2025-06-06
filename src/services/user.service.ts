@@ -1,7 +1,7 @@
 // src/services/user.service.ts
 import { PrismaClient } from "@prisma/client";
 import { Static } from "@sinclair/typebox";
-import { avatarSchema, userBodySchema } from "../schema/user.schema";
+import { avatarSchema } from "../schema/user.schema";
 import { error } from "elysia";
 import { ObjectId } from "mongodb";
 import { errMsg } from "@/config/message.error";
@@ -11,6 +11,7 @@ const prisma = new PrismaClient();
 
 const userService = {
   getActiveUserById: async (id: string) => {
+    console.log("id", id);
     logger.info(`[USER][getUserById] Start {"id": "${id}"}`);
     try {
       if (!id || !ObjectId.isValid(id)) {

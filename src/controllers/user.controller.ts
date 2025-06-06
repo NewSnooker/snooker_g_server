@@ -46,6 +46,7 @@ export const userController = new Elysia().group(
                   data: userResSchema,
                 }),
                 400: msgSchema,
+                401: msgSchema,
                 403: msgSchema,
                 404: msgSchema,
                 500: msgSchema,
@@ -96,7 +97,7 @@ export const userController = new Elysia().group(
             }
           )
           .put(
-            "/me/avatar/:id",
+            "/avatar/:id",
             async ({ params: { id }, body, set }) => {
               const response = await userService.updateAvatar(id, body.avatar);
               set.status = response.status;
