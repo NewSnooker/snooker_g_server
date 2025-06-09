@@ -290,6 +290,47 @@ const superAdminService = {
       throw error(500, err);
     }
   },
+  impersonateUser: async (adminId: string, userIdToImpersonate: string) => {
+    logger.info(
+      `[SUPER_ADMIN][impersonateUser] Admin ${adminId} impersonates ${userIdToImpersonate}`
+    );
+
+    // ตรวจสอบสิทธิ์ admin
+    const admin = await prisma.user.findUnique({ where: { id: adminId } });
+    if (!admin || !admin.roles.includes("ADMIN")) {
+      logger.warn("[SUPER_ADMIN][impersonateUser] Unauthorized");
+      return errMsg.Unauthorized;
+    }
+
+    // ตรวจสอบว่า user เป้าหมายมีอยู่จริง
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userIdToImpersonate },
+    });
+    if (!targetUser) {
+      logger.warn("[SUPER_ADMIN][impersonateUser] UserToImpersonateNotFound");
+      return errMsg.UserNotFound;
+    }
+
+    // บันทึก log
+    await prisma.impersonationLog.create({
+      data: {
+        adminId,
+        impersonatedId: userIdToImpersonate,
+      },
+    });
+
+    return {
+      status: 200,
+      message: "เข้าสู่ระบบแทนผู้ใช้สำเร็จ",
+      data: {
+        id: targetUser.id,
+        roles: targetUser.roles,
+        tokenVersion: targetUser.tokenVersion,
+        impersonated: true,
+        impersonatorId: adminId,
+      },
+    };
+  },
 };
 
 export { superAdminService };

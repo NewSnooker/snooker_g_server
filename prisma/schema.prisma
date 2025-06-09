@@ -36,7 +36,19 @@ model User {
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
   deletedAt       DateTime?
-  UploadedBy      TempUpload[]          @relation("UploadedBy")
+  uploadedBy      TempUpload[]          @relation("UploadedBy")
+  impersonations  ImpersonationLog[]    @relation("Impersonator") // เป็นคน impersonate
+  impersonatedBy  ImpersonationLog[]    @relation("ImpersonatedUser") // ถูก impersonate โดยใคร
+}
+
+model ImpersonationLog {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  adminId        String   @db.ObjectId
+  impersonatedId String   @db.ObjectId
+  createdAt      DateTime @default(now())
+
+  admin        User @relation("Impersonator", fields: [adminId], references: [id])
+  impersonated User @relation("ImpersonatedUser", fields: [impersonatedId], references: [id])
 }
 
 enum AuthProvider {

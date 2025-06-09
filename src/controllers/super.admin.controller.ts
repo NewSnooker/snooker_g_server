@@ -183,5 +183,62 @@ export const superAdminController = new Elysia().group(
               },
             }
           )
+          .post(
+            "/impersonate",
+            async ({ body, set, jwt, cookie: { auth }, authUser }: any) => {
+              const { userIdToImpersonate } = body;
+              const response = await superAdminService.impersonateUser(
+                authUser.id,
+                userIdToImpersonate
+              );
+              if (response.status === 200) {
+                const token = await jwt.sign({
+                  id: response.data.id,
+                  roles: response.data.roles,
+                  tokenVersion: response.data.tokenVersion,
+                  impersonated: true,
+                  impersonatorId: response.data.impersonatorId,
+                });
+
+                auth.set({
+                  value: token,
+                  maxAge: 60 * 60 * 24,
+                  httpOnly: true,
+                  secure: process.env.NODE_ENV === "production",
+                  path: "/",
+                });
+
+                return { ...response, value: token };
+              }
+
+              set.status = response.status;
+              return response;
+            },
+            {
+              body: t.Object({
+                userIdToImpersonate: t.String(),
+              }),
+              response: {
+                200: t.Object({
+                  status: t.Number(),
+                  message: t.String(),
+                  data: t.Object({
+                    id: t.String(),
+                    roles: t.Array(t.String()),
+                    tokenVersion: t.Number(),
+                    impersonated: t.Boolean(),
+                    impersonatorId: t.String(),
+                  }),
+                  value: t.String(),
+                }),
+                401: msgSchema,
+                404: msgSchema,
+              },
+              detail: {
+                summary: "Impersonate user",
+                description: "ให้แอดมินเข้าสู่ระบบแทนผู้ใช้งาน",
+              },
+            }
+          )
     )
 );
