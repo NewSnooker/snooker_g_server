@@ -5,7 +5,7 @@ import { authContext } from "@/interface/common.interface";
 import { logger } from "@/utils/logger";
 import { msgSchema } from "@/schema/common.schema";
 import { avatarSchema, userResSchema } from "@/schema/user.schema";
-import { hasUserRole } from "@/utils/auth";
+import { hasUserRole } from "@/utils/permission";
 
 export const userController = new Elysia().group(
   "/user",

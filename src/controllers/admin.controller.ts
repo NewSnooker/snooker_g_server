@@ -13,7 +13,7 @@ import {
   userResSchema,
   userUpdateBodySchema,
 } from "@/schema/user.schema";
-import { hasAdminOrSuperAdminRole } from "@/utils/auth";
+import { hasAdminOrSuperAdminRole } from "@/utils/permission";
 
 export const adminController = new Elysia().group(
   "/admin",
@@ -91,14 +91,13 @@ export const adminController = new Elysia().group(
           )
           .put(
             "/force-logout",
-            async ({ body, set }) => {
+            async (context) => {
+              const { body, set, authUser } = context as authContext;
               const { ids } = body as { ids: string[] };
-              if (!ids || ids.length === 0) {
-                set.status = 400;
-                return errMsg.InvalidId;
-              }
-
-              const response = await adminService.forceLogoutUserById(ids);
+              const response = await adminService.forceLogoutUserById(
+                ids,
+                authUser.id
+              );
               set.status = response.status;
               return response;
             },
@@ -123,19 +122,14 @@ export const adminController = new Elysia().group(
             "/soft-delete",
             async (context) => {
               const { body, set, authUser } = context as authContext;
-              const { ids } = body as { ids?: string[] };
-              if (!ids || ids.length === 0 || ids.includes(authUser.id)) {
-                set.status = 400;
-                logger.warn("[ADMIN][softDeleteUser] cannot delete self");
-                return errMsg.CannotDeleteSelf;
-              }
-
+              const { ids } = body as { ids: string[] };
               const logoutResponse = await adminService.forceLogoutUserById(
-                ids
+                ids,
+                authUser.id
               );
               if (logoutResponse.status === 200) {
                 const softDeleteResponse =
-                  await adminService.softDeleteUserById(ids);
+                  await adminService.softDeleteUserById(ids, authUser.id);
                 set.status = softDeleteResponse.status;
                 return softDeleteResponse;
               }
@@ -161,14 +155,10 @@ export const adminController = new Elysia().group(
           )
           .put(
             "/restore",
-            async ({ body, set }) => {
+            async (context) => {
+              const { body, set, authUser } = context as authContext;
               const { ids } = body as { ids: string[] };
-              if (!ids || ids.length === 0) {
-                set.status = 400;
-                return errMsg.InvalidId;
-              }
-
-              const response = await adminService.restoreUser(ids);
+              const response = await adminService.restoreUser(ids, authUser.id);
               set.status = response.status;
               return response;
             },
@@ -191,13 +181,13 @@ export const adminController = new Elysia().group(
           )
           .post(
             "create-user",
-            async ({ body, set }) => {
+            async (context) => {
+              const { body, set } = context as authContext;
               const { user } = body as {
                 user: Static<typeof userBodySchema> & {
                   image: Static<typeof imageBodySchema>;
                 };
               };
-
               const response = await adminService.createUser(user);
               set.status = response.status;
               return response;
@@ -224,16 +214,14 @@ export const adminController = new Elysia().group(
             }
           )
           .put(
-            "user",
-            async ({ body, set, params }) => {
+            "user/:id",
+            async ({ body, set, params: { id } }) => {
               const user = body as Static<typeof userUpdateBodySchema>;
-
               const payload = {
-                id: params.id,
+                id,
                 email: user.email,
                 username: user.username,
               };
-
               const response = await adminService.updateUser(payload);
               set.status = response.status;
               return response;

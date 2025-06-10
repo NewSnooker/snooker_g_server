@@ -23,6 +23,10 @@ export const errMsg = {
     status: 400,
     message: "ไม่สามารถลบตัวเองได้",
   },
+  CannotForceLogoutSelf: {
+    status: 400,
+    message: "ไม่สามารถออกจากระบบตัวเองได้",
+  },
   UserNotDeleted: {
     status: 400,
     message: "ผู้ใช้ยังไม่ถูกลบ",

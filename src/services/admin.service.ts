@@ -4,7 +4,11 @@ import { error, Static } from "elysia";
 import { ObjectId } from "mongodb";
 import { errMsg } from "@/config/message.error";
 import { logger } from "@/utils/logger";
-import { hasAdminOrSuperAdminRole, validateRoles } from "@/utils/auth";
+import {
+  hasAdminOrSuperAdminRole,
+  validateRoles,
+  validIds,
+} from "@/utils/permission";
 import { isAfter } from "date-fns";
 import { userBodySchema, userUpdateBodySchema } from "@/schema/user.schema";
 import { SALT_ROUNDS } from "@/config/constant";
@@ -141,17 +145,20 @@ const adminService = {
       throw error(500, err);
     }
   },
-  forceLogoutUserById: async (ids: string[]) => {
+  forceLogoutUserById: async (ids: string[], myId: string) => {
     logger.info(
       `[ADMIN][forceLogoutUserById] Start {"ids": "${ids.join(", ")}"}`
     );
-
     try {
-      if (!ids.length || !ids.every((id) => ObjectId.isValid(id))) {
+      const isValidIds = validIds(ids);
+      if (!isValidIds) {
         logger.warn("[ADMIN][forceLogoutUserById] Invalid ID(s)");
         return errMsg.InvalidId;
       }
-
+      if (ids.includes(myId)) {
+        logger.warn("[ADMIN][forceLogoutUserById] cannot force logout self");
+        return errMsg.CannotForceLogoutSelf;
+      }
       const results = await Promise.all(
         ids.map(async (id) => {
           const user = await prisma.user.findUnique({
@@ -221,14 +228,19 @@ const adminService = {
       throw error(500, err);
     }
   },
-  softDeleteUserById: async (ids: string[]) => {
+  softDeleteUserById: async (ids: string[], myId: string) => {
     logger.info(
       `[ADMIN][softDeleteUserById] Start {"ids": "${ids.join(", ")}"}`
     );
     try {
-      if (!ids.length || !ids.every((id) => ObjectId.isValid(id))) {
-        logger.warn("[ADMIN][softDeleteUser] InvalidId");
+      const isValidIds = validIds(ids);
+      if (!isValidIds) {
+        logger.warn("[ADMIN][softDeleteUserById] Invalid ID(s)");
         return errMsg.InvalidId;
+      }
+      if (ids.includes(myId)) {
+        logger.warn("[ADMIN][softDeleteUserById] cannot restore self");
+        return errMsg.CannotForceLogoutSelf;
       }
 
       const results = await Promise.all(
@@ -292,13 +304,18 @@ const adminService = {
       throw err;
     }
   },
-  restoreUser: async (ids: string[]) => {
+  restoreUser: async (ids: string[], myId: string) => {
     logger.info(`[ADMIN][restoreUser] Start {"ids": "${ids.join(", ")}"}`);
 
     try {
-      if (!ids.length || !ids.every((id) => ObjectId.isValid(id))) {
+      const isValidIds = validIds(ids);
+      if (!isValidIds) {
         logger.warn("[ADMIN][restoreUser] Invalid ID(s)");
         return errMsg.InvalidId;
+      }
+      if (ids.includes(myId)) {
+        logger.warn("[ADMIN][restoreUser] cannot restore self");
+        return errMsg.CannotForceLogoutSelf;
       }
 
       const results = await Promise.all(
@@ -423,11 +440,11 @@ const adminService = {
         return errMsg.InvalidUserData;
       }
 
+      // ตรวจสอบ email โดยยกเว้นกรณีที่เป็น email เดิมของผู้ใช้คนนี้
       const existingEmail = await commonService.verifyActiveUserByEmail(
         user.email
       );
-
-      if (existingEmail) {
+      if (existingEmail && existingEmail.id !== user.id) {
         logger.warn("[ADMIN][updateUser] EmailExists");
         return errMsg.EmailExists;
       }

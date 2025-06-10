@@ -3,8 +3,13 @@ import { Context, StatusMap } from "elysia";
 import { Cookie, ElysiaCookie } from "elysia/dist/cookies";
 import { HTTPHeaders } from "elysia/dist/types";
 
+export interface authUser {
+  id: string;
+  tokenVersion: number;
+  roles: Role[]; // Define authUser with proper structure
+}
 export interface authContext extends Context {
-  authUser: { id: string; tokenVersion: number; roles: Role[] }; // Define authUser with proper structure
+  authUser: authUser;
 }
 
 export interface loggerContext extends Context {

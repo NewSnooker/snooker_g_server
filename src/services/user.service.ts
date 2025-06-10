@@ -11,7 +11,6 @@ const prisma = new PrismaClient();
 
 const userService = {
   getActiveUserById: async (id: string) => {
-    console.log("id", id);
     logger.info(`[USER][getUserById] Start {"id": "${id}"}`);
     try {
       if (!id || !ObjectId.isValid(id)) {

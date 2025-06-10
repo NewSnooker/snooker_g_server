@@ -1,7 +1,6 @@
 import { Role } from "@prisma/client";
-import { logger } from "./logger";
-import { errMsg } from "@/config/message.error";
 import { error } from "elysia";
+import { ObjectId } from "mongodb";
 
 export function hasRequiredRole(roles: Role[], requiredRoles: Role[]): boolean {
   return roles.some((role) => requiredRoles.includes(role));
@@ -27,3 +26,16 @@ export function validateRoles(roles: Role[]): void {
     }
   }
 }
+export function validIds(ids: string[]): boolean {
+  if (
+    !ids.length ||
+    ids.length === 0 ||
+    !ids.every((id) => ObjectId.isValid(id))
+  ) {
+    return false;
+  }
+  return true;
+}
+// export function ValidId(id): void {
+
+// }

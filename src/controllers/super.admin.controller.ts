@@ -3,7 +3,7 @@ import { msgSchema } from "../schema/common.schema";
 import { authContext } from "@/interface/common.interface";
 import { logger } from "@/utils/logger";
 import { errMsg } from "@/config/message.error";
-import { hasSuperAdminRole } from "@/utils/auth";
+import { hasSuperAdminRole } from "@/utils/permission";
 import { superAdminService } from "@/services/super.admin.service";
 
 export const superAdminController = new Elysia().group(
@@ -32,14 +32,13 @@ export const superAdminController = new Elysia().group(
         app
           .put(
             "/force-logout",
-            async ({ body, set }) => {
+            async (context) => {
+              const { body, set, authUser } = context as authContext;
               const { ids } = body as { ids: string[] };
-              if (!ids || ids.length === 0) {
-                set.status = 400;
-                return errMsg.InvalidId;
-              }
-
-              const response = await superAdminService.forceLogoutUserById(ids);
+              const response = await superAdminService.forceLogoutUserById(
+                ids,
+                authUser.id
+              );
               set.status = response.status;
               return response;
             },
@@ -60,46 +59,16 @@ export const superAdminController = new Elysia().group(
               },
             }
           )
-          .put(
-            "/force-logout-all",
-            async (context) => {
-              const { authUser, set } = context as authContext;
-              const response = await superAdminService.forceLogoutAll(
-                authUser.id
-              );
-              set.status = response.status;
-              return response;
-            },
-            {
-              response: {
-                200: msgSchema,
-                401: msgSchema,
-                403: msgSchema,
-                500: msgSchema,
-              },
-              detail: {
-                summary: "Force logout all users",
-                description:
-                  "API สำหรับ Super Admin เพื่อบังคับให้ผู้ใช้ทุกคนหลุดออกจากระบบ ยกเว้นตัวเอง",
-              },
-            }
-          )
           .delete(
             "/soft-delete",
             async (context) => {
               const { body, set, authUser } = context as authContext;
               const { ids } = body as { ids: string[] };
-              if (!ids || ids.length === 0 || ids.includes(authUser.id)) {
-                set.status = 400;
-                logger.warn("[SUPER_ADMIN][softDeleteUser] cannot delete self");
-                return errMsg.CannotDeleteSelf;
-              }
-
               const logoutResponse =
-                await superAdminService.forceLogoutUserById(ids);
+                await superAdminService.forceLogoutUserById(ids, authUser.id);
               if (logoutResponse.status === 200) {
                 const softDeleteResponse =
-                  await superAdminService.softDeleteUserById(ids);
+                  await superAdminService.softDeleteUserById(ids, authUser.id);
                 set.status = softDeleteResponse.status;
                 return softDeleteResponse;
               }
@@ -125,14 +94,13 @@ export const superAdminController = new Elysia().group(
           )
           .delete(
             "/hard-delete",
-            async ({ body, set }) => {
+            async (context) => {
+              const { body, set, authUser } = context as authContext;
               const { ids } = body as { ids: string[] };
-              if (!ids || ids.length === 0) {
-                set.status = 400;
-                return errMsg.InvalidId;
-              }
-
-              const response = await superAdminService.hardDeleteUserById(ids);
+              const response = await superAdminService.hardDeleteUserById(
+                ids,
+                authUser.id
+              );
               set.status = response.status;
               return response;
             },
@@ -155,14 +123,14 @@ export const superAdminController = new Elysia().group(
           )
           .put(
             "/restore",
-            async ({ body, set }) => {
-              const { ids } = body as { ids?: string[] };
-              if (!ids || ids.length === 0) {
-                set.status = 400;
-                return errMsg.InvalidId;
-              }
+            async (context) => {
+              const { body, set, authUser } = context as authContext;
+              const { ids } = body as { ids: string[] };
 
-              const response = await superAdminService.restoreUser(ids);
+              const response = await superAdminService.restoreUser(
+                ids,
+                authUser.id
+              );
               set.status = response.status;
               return response;
             },

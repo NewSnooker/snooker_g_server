@@ -31,7 +31,6 @@ export const commonController = new Elysia().group(
                 name: string;
                 url: string;
               };
-
               const response = await commonService.createTempUpload(
                 key,
                 name,
